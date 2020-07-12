@@ -165,7 +165,7 @@ En el código *Javascript* que está escribiendo, importe la función:
 import Braulio from "braulio-core";
 
 const cliente = Braulio("config.json", {
-         clientId: "###---CLIENT ID---###,
+         clientId: "###---CLIENT ID---###",
          apiKey: "###---API KEY---###",
          hosted_domain: "iesmiinstituto.com"
       });
@@ -181,3 +181,56 @@ Recuerde que en el código HTML deberá incluir la carga de ``gapi``:
 ~~~
 
 ## API
+
+### Inicialización
+
+Utilice la función cargadora:
+
+~~~javascript
+
+const cliente = Braulio("config.json", {
+         clientId: "###---CLIENT ID---###",
+         apiKey: "###---API KEY---###",
+         hosted_domain: "iesmiinstituto.com"
+      });
+
+// Código javascript relacionado con los eventos *succeed*,
+// *failed*, *signin* y *signout*. 
+
+cliente.init();
+
+~~~
+
+El cliente no se inicializa propiamente hasta que no se usa su método
+``.init()``, pero antes de invocarlo es necesario que esté cargado todo el
+código relacionado con los cuatro eventos asociados a la inicialización:
+
+| Evento   | Se dispara cuando....       |
+| -------- | --------------------------- |
+| succeed  | Se inicializó con éxito.    |
+| failed   | Error en la inicialización. |
+| signin   | Se produjo autenticación.   |
+| signout  | Hubo desautenticación.      |
+
+En realidad los dos últimos eventos están relacionados con el proceso de
+autenticación, pero la inicialización intenta una autenticación automática, por
+lo que al menos los eventos de *signin* es pertinente tenerlos cargados antes
+de proceder a la inicialización.
+
+Para asociar acciones a los eventos, debe usarse el método ``.eventListener()``:
+
+~~~javascript
+
+cliente.addEventListener("succeed", function(e) {  // this es cliente
+   console.log(e.type);    // succeed.
+   console.log(e.target);  // cliente.
+
+   // Habilitamos el botón que permite la autenticación.
+   document.getElementById("authorize").disabled = false;
+});
+
+~~~
+
+### Configuración
+
+### Manipulación de G-Suite
