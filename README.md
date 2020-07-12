@@ -117,13 +117,13 @@ normalizados, no hay forma de crear una herramienta universal de importación.
 
 El código depende de
 [gapi-client](https://github.com/google/google-api-javascript-client), el cual
-debe cargarse siempre a través de una etiqueta ``script``, se use calquiera de
+debe cargarse siempre a través de una etiqueta ``script``, se use cualquiera de
 los dos métodos que se enuncian a continuación.
 
 ### Directamente en el navegador
 
-Descargue el código (braulio-core.js)[dist/braulio-core.js] y al final de su
-página HTML coloque los elementos ``script``:
+Descargue el código ``dist/braulio-core.js`` y al final de su página HTML
+coloque los elementos ``script``:
 
 ~~~html
 
@@ -152,7 +152,7 @@ window.onload = function(e) {
 
 Instale este repositorio en su directorio de desarrollo:
 
-~~~bash
+~~~console
 
 $ npm install git+https://github.com/sio2sio2/graulio-core.git
 
