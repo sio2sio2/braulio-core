@@ -1,0 +1,58 @@
+{
+  "name": "braulio-core",
+  "description": "Gestión de la G-Suite de un IES",
+  "author": "José Miguel Sánchez Alés <sio2sio2+github@gmail.com>",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "webpack --env.output=min --progress",
+    "build:bundle": "webpack --env.output=bundle --progress",
+    "build:src": "webpack --env.output=src --progress",
+    "build:debug": "webpack --env.output=srcdebug --progress",
+    "debug": "webpack-dev-server --env.output=debug --progress"
+  },
+  "license": "MIT",
+  "keywords": [
+    "javascript",
+    "g-suite",
+    "educacion",
+    "ies",
+    "instituto"
+  ],
+  "browserslist": {
+    "production": [
+      "cover 95% in ES"
+    ],
+    "oneplus": [
+      "> 1% in ES"
+    ],
+    "ie10": [
+      "> .25% in ES",
+      "ie >= 10"
+    ],
+    "relax": [
+      "cover 80% in ES"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sio2sio2/braulio.git"
+  },
+  "homepage": "https://github.com/sio2sio2/braulio#readme",
+  "bugs": {
+    "url": "https://github.com/sio2sio2/braulio/issues"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.10.4",
+    "@babel/core": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
+    "babel-loader": "^8.1.0",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0",
+    "webpack-merge": "^4.2.2"
+  },
+  "dependencies": {
+    "core-js": "^3.6.5"
+  }
+}

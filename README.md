@@ -1,0 +1,116 @@
+# Braulio (core)
+
+**Braulio** es una aplicación web bastante modesta que facilita la gestión de
+[cuentas G-Suite](https://gsuite.google.es/) y, en particular:
+
+* Las tareas de alta y baja de alumnos y profesores.
+* La gestión de grupos necesarios:
+
+   - Departamentos.
+   - Tutores.
+   - Grupos de alumnos.
+   - Equipos educativos.
+
+Por supuesto, esta gestión puede hacerse manualmente a tavés de la [interfaz
+oficial](https://admin.google.com:), pero **Braulio** está diseñada para hacer
+éstas específicamente, así que automatiza o semiautomatiza muchas de ellas y
+ahorra tiempo y esfuerzo.
+
+El repositorio no contiene implementación de interfaz web alguna, sólo contiene
+el código Javascript que conecta con las [APIs de
+Google](https://developers.google.com/apis-explorer). Para ella, consulte
+[braulio-app](https://github.io/sio2sio2/braulio-app).
+
+## Preparación del dominio
+
+Para poder utilizar la aplicación es preciso:
+
+* En [admin.google.com>Seguridad>Permisos de la API>Control de acceso de
+  aplicaciones](https://admin.google.com/ac/owl/list?tab=services&hl=es)
+  eliminar las restricciones a "Administrador de G-Suite".
+
+* En la [consola de desarrollador](https://console.developers.google.com):
+
+  + Crear un nuevo proyecto.
+
+  + En la pantalla de consentimiento, hacer que el proyecto sea de tipo interno
+    y darle un nombre.
+
+  + Crear credenciales:
+
+    1. Un identificador de cliente para una aplicación web (que será el
+       ``clientId`` en nuestra aplicación).
+    1. Una clave de API (que será la ``apiKey`` en nuestra aplicación).
+
+  + Habilitar las APIs:
+
+    1. [Admin SDK](https://developers.google.com/admin-sdk/directory), que
+       permite manipular las cuentas de G-Suite.
+    1. [Groups Settings API](https://developers.google.com/admin-sdk/groups-settings/get_started),
+       que permite definir cuál es el acceso a las cuentas de grupo. Por ejemplo,
+       si es posible que una cuenta externa, escriba a un grupo de G-Suite.
+    1. [Drive API](https://developers.google.com/drive/api/v3/reference), que
+       permite leer y escribir en el *Drive* del usuario. En este proyecto, es
+       necesario para poder guardar la configuración de la aplicación.
+    1. [Gmail API](https://developers.google.com/gmail/api), que permite el envío
+       de mensajes.
+
+## Organización del dominio
+
+Las cuentas del instituto se organizarán del siguiente modo:
+
+1. Tres unidades organizativas:
+
+   * **Profesores**, para profesores.
+   * **Alumnos**. para alumnos.
+   * **Otros**, para cuentas que no sean de profesores ni de alumnos (p.e. una
+     cuenta para la biblioteca del centro).
+
+1. Dos grandes grupos relacionados con estas unidades organizativas:
+
+   * **claustro**, que incluirá todos los grupos que representan
+     departamentos didácticos o de formación profesional (lo que indirectamente
+     supondrá que contenga a todos los profesores).
+   * **alumnos**, que incluirá todos los grupos de alumnos (lo que
+     indirectamente supondrá que contenga a todos los alumnos).
+
+1. Grupos que contienen usuarios:
+
+   * Un grupo por cada **departamento didáctico**, cada uno de los cuales
+     contendrá a los profesores de tal departamento.
+   * Un grupo por cada **conjunto de tutores** que se estime oportuno. La
+     interfaz dejará libertad para crear estos grupos y marcar a los profesores
+     que formen parte e ellos. Existirá, además, un grupo **tutores** que
+     contenga todo estos grupos.
+   * Un grupo por cada **grupo de alumnos**, cada uno de los cuales contendrá a
+     los alumnos de tal grupo.
+   * Un grupo por cada **equipo educativo**, cada uno de los cuales contendrá a
+     los profesores que imparten clase en el grupo de alumnos correspondiente.
+
+1. Cuentas de usuario:
+
+   * Una para cada **profesor**, cada una de las cuales deberá estar en un
+     departamento.
+   * Una para cada **alumno**, cada una de las cuales deberá estar en un grupo
+     de alumnos.
+   * **Otras cuentas** que servirán para cualquier propósito:
+
+     + Servicios del instituto (*Biblioteca*, *Secretaría*).
+     + Cargos (en caso de que se prefiera una cuenta nueva a crearle un alias
+       al que desempeña el cargo).
+
+---
+**Nota**
+
+Sería conveniente también formar grupos de alumnos para cada asignatura, porque
+permitiría formar los grupos de
+[Classroom](https://edu.google.com/products/classroom), pero
+eso exige disponer de un método sencillo para obtener esos datos de Séneca y no
+existe. Es probable que los institutos antes de volcar los datos en Séneca,
+creen los grupos con alguna otra herramienta (p.e. hojas de cálculo) que permita
+una exportación más sencilla; pero al ser métodos semimanuales y no estar
+normalizados, no hay forma de crear una herramienta universal de importación.
+
+---
+
+## Instalacion

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Prueba de concepto</title>
+    <meta charset="utf-8" />
+
+    <script>
+      var clientId = "453752488944-ns9fmlkgo3avjceq5s6epvgmtnobomm7.apps.googleusercontent.com",
+          apiKey = "AIzaSyDMYX1htwNe_cAZMwLcwgXs_3C-sX3ZuMs",
+          hosted_domain = "iescastillodeluna.es";
+    </script>
+  </head>
+  <body>
+     <h1>Prueba de API</h1>
+
+      <button id="authorize">Entrar</button>
+
+      <p>
+         <button id="lu" disabled>Listar usuarios</button>
+         <button id="lp" disabled>Listar profesores</button>
+         <button id="lg" disabled>Listar grupos</button>
+         <button id="lgu" disabled>Listar mis grupos</button>
+         <button id="lm" disabled>Listar miembros</button>
+         <button id="im" disabled>Prueba de inserción</button>
+         <button id="vm" disabled>Vaciar miembros</button>
+      </p>
+
+      <pre id="content" style="white-space: pre-wrap;"></pre>
+      
+      <script src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>
+      <script src="../dist/braulio-core.js"></script>
+      <script src="index.js"></script>
+  </body>
+</html>
