@@ -113,4 +113,71 @@ normalizados, no hay forma de crear una herramienta universal de importación.
 
 ---
 
-## Instalacion
+## Uso
+
+El código depende de
+[gapi-client](https://github.com/google/google-api-javascript-client), el cual
+debe cargarse siempre a través de una etiqueta ``script``, se use calquiera de
+los dos métodos que se enuncian a continuación.
+
+### Directamente en el navegador
+
+Descargue el código (braulio-core.js)[dist/braulio-core.js] y al final de su
+página HTML coloque los elementos ``script``:
+
+~~~html
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="braulio-core.js"></script>
+
+~~~
+
+En su código *Javascript* podrá utilizar el cliente *Braulio* a través de la
+función ``B``:
+
+~~~javascript
+
+window.onload = function(e) {
+   const cliente = B("config.json", {
+      clientId: "###---CLIENT ID---###,
+      apiKey: "###---API KEY---###",
+      hosted_domain: "iesmiinstituto.com"
+   });
+   // etc...
+}
+
+~~~
+
+### Desarrollando con NodeJS
+
+Instale este repositorio en su directorio de desarrollo:
+
+~~~bash
+
+$ npm install git+https://github.com/sio2sio2/graulio-core.git
+
+~~~
+
+En el código *Javascript* que está escribiendo, importe la función:
+
+~~~javascript
+
+import Braulio from "braulio-core";
+
+const cliente = Braulio("config.json", {
+         clientId: "###---CLIENT ID---###,
+         apiKey: "###---API KEY---###",
+         hosted_domain: "iesmiinstituto.com"
+      });
+
+~~~
+
+Recuerde que en el código HTML deberá incluir la carga de ``gapi``:
+
+~~~html
+
+<script src="https://apis.google.com/js/api.js"></script>
+
+~~~
+
+## API
