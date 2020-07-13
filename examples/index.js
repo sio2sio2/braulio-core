@@ -19,6 +19,10 @@ function interfaz(client) {
       appendPre(JSON.stringify(error, null, 2));
    });
 
+   client.addEventListener("noconfig", function(e) {
+      appendPre("NO HAY CONFIGURACIÖN. Debería forzarse a crear la mínima indispensable.");
+   });
+
    client.addEventListener("signedin", function(e) {
       const button = document.getElementById("authorize");
       button.textContent = "Salir";
@@ -81,10 +85,10 @@ function interfaz(client) {
          console.log(error.body);
       }
 
-      client.config.read().then(config => {
-         console.log("DEBUG: configuración:", config);
-         client.config.write({cd: 10, d: "AAAcccBBB"}).then(response => console.log("DEBUGx", response));
-      });
+      content = await client.config.get();
+      console.log("DEBUG", content, await client.config.isEmpty);
+      // client.config.set({"ab": 1, "xxDDxx": 12345}).then(response => console.log("DEBUGx", response));
+      // client.config.remove(response => console.log(response));
    });
 
    document.getElementById("im").addEventListener("click", function(e) {

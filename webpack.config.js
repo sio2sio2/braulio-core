@@ -3,6 +3,7 @@ const webpack = require("webpack"),
       merge = require("webpack-merge"),
       name = require("./package.json").name;
 
+
 // Configuración para Babel
 function confBabel(env) {
    return {

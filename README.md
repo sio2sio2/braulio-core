@@ -150,7 +150,7 @@ window.onload = function(e) {
 
 ### Desarrollando con NodeJS
 
-Instale este repositorio en su directorio de desarrollo:
+Instale la librería en su directorio de desarrollo:
 
 ~~~console
 
@@ -195,7 +195,7 @@ const cliente = Braulio("config.json", {
       });
 
 // Código javascript relacionado con los eventos *succeed*,
-// *failed*, *signin* y *signout*. 
+// *failed*, *noconfig*, *signin* y *signout*. 
 
 cliente.init();
 
@@ -203,21 +203,23 @@ cliente.init();
 
 El cliente no se inicializa propiamente hasta que no se usa su método
 ``.init()``, pero antes de invocarlo es necesario que esté cargado todo el
-código relacionado con los cuatro eventos asociados a la inicialización:
+código relacionado con los cinco eventos asociados a la inicialización:
 
-| Evento   | Se dispara cuando....       |
-| -------- | --------------------------- |
-| succeed  | Se inicializó con éxito.    |
-| failed   | Error en la inicialización. |
-| signin   | Se produjo autenticación.   |
-| signout  | Hubo desautenticación.      |
+| Evento   | Se dispara cuando....        |
+| -------- | ---------------------------- |
+| succeed  | se inicializó con éxito.     |
+| failed   | error en la inicialización.  |
+| signin   | se produjo autenticación.    |
+| noconfig | no hay configuración previa. |
+| signout  | hubo desautenticación.       |
 
-En realidad los dos últimos eventos están relacionados con el proceso de
+En realidad los tres últimos eventos están relacionados con el proceso de
 autenticación, pero la inicialización intenta una autenticación automática, por
-lo que al menos los eventos de *signin* es pertinente tenerlos cargados antes
-de proceder a la inicialización.
+lo que al menos los eventos de *signin* y **noconfig** es pertinente tenerlos
+cargados antes de proceder a la inicialización.
 
-Para asociar acciones a los eventos, debe usarse el método ``.eventListener()``:
+Para asociar acciones a los eventos, debe usarse el método
+``.addeventListener()``:
 
 ~~~javascript
 

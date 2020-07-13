@@ -1,0 +1,68 @@
+{
+   "claustro": "claustro",
+   "alumnos": "alumnos",
+   "departamentos": [
+      {
+         "nombre": "Filosofía",
+         "puestos": [ "~*.590001" ]
+      },
+      {
+         "nombre": "Clásicas",
+         "puestos": [ "00590002" , "00590003" ]
+      },
+      {
+         "nombre": "Lengua castellana y Literatura",
+         "puestos": [ "0059004" ]
+      },
+      {
+         "nombre": "Geografía e Historia",
+         "puestos": [ "~.*590005" ]
+      },
+      {
+         "nombre": "Matemáticas",
+         "puestos": [ "~.*590006" ]
+      },
+      {
+         "nombre": "Física y Química",
+         "puestos": [ "~.*590007" ]
+      },
+      {
+         "nombre": "Biología y Geología",
+         "puestos": [ "~.*590008" ]
+      },
+      {
+         "nombre": "Dibujo",
+         "puestos": [ "~.*590009" ]
+      },
+      {
+         "nombre": "Francés",
+         "puestos": [ "00590010" ]
+      },
+      {
+         "nombre": "Inglés",
+         "puestos": [ "00590011" ]
+      },
+      {
+         "nombre": "Música",
+         "puestos": [ "~.*590016" ]
+      },
+      {
+         "nombre": "Educación Física",
+         "usuario": "educacionfísica",
+         "puestos": [ "~.*590017" ]
+      },
+      {
+         "nombre": "Orientación",
+         "puestos": [ "00590018", "~00597.*", "00590058", "00590059" ]
+      },
+      {
+         "nombre": "Tecnología",
+         "puestos": [ "~.*590019" ]
+      },
+      {
+         "nombre": "Economía",
+         "puestos": [ "~.*590061", "~.*590105" ]
+      }
+   ],
+   "grupos": []
+}

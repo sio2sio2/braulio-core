@@ -11,9 +11,19 @@ function crearCliente(name, params) {
                              "https://www.googleapis.com/auth/drive.appdata")
                    }));
 
-   // Enlaza con el fichero de configuración correspondiente,
-   // cuando nos identificamos.
-   cliente.addEventListener("signedin", e => e.target.config = new Config(name));
+   // Consigue el fichero de configuración al identificarse.
+   // Si no hay configuración, se desencadena el evento noconfig.
+   cliente.addEventListener("signedin", e => {
+      const config = e.target.config = new Config(name);
+      config.isEmpty.then(empty => {
+         if(empty) {
+            (e.target._events["noconfig"] || []).forEach(f => f.call(e.target, {
+               type: "noconfig",
+               target: this
+            }));
+         }
+      });
+   });
    cliente.addEventListener("signedout", e => e.target.config = null);
 
    cliente.api = api;  // API de comunicación con G-Suite.

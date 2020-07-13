@@ -1,3 +1,5 @@
+import DEFAULT_CONFIG from "./config.json";
+
 /**
  * Manipula la configuración del programa almacenada en el Drive del usuaario.
  *
@@ -10,14 +12,42 @@ function Config(name) {
          writable: true,
          value: null
       },
-      "id": { 
-         get: function() {
-            if(!this._id) this._id = getFileID(name);
-            return this._id;
-         }
+      "name": { value: name },
+      "_content": {
+         enumerable: false,
+         writable: true,
+         value: null
       }
    });
 }
+
+
+Object.defineProperties(Config.prototype, {
+   /**
+    * Identificador del fichero de configuración en el Drive.
+    */
+   id: { 
+      get() {
+         if(!this._id) this._id = getFileID(this.name);
+         return this._id;
+      }
+   },
+   /**
+    *  Indica si la configuración está vacío (lo que
+    *  significa que habrá que definirla inicialmente.
+    */
+   isEmpty: {
+      get() {
+         return new Promise(resolve => {
+            this.get().then(content => resolve(Object.keys(content).length === 0));
+         })
+      }
+   },
+   /**
+    * Preconfiguración para crear la configuración ex-novo.
+    */
+   seed: { value: DEFAULT_CONFIG }
+});
 
 
 /**
@@ -53,7 +83,7 @@ function getFileID(name) {
                      gapi.client.request({
                         path: "https://www.googleapis.com/upload/drive/v3/files/" + id,
                         method: "PATCH",
-                        body: '{}' // Fichero vacío.
+                        body: {},  // Configuración vacía.
                      }).then(response => resolve(id));
                   });
                break;
@@ -69,37 +99,45 @@ function getFileID(name) {
 
 
 /**
- * Obtiene el contenido del fichero de configuración
+ * Obtiene la configuración.
  *
  * @returns {Promise} Promesa con el contenido.
  */
-Config.prototype.read = function() {
+Config.prototype.get = function() {
    return new Promise(async resolve => {
+            if(this._content) resolve(this._content);
+
             const id = await this.id;
 
             gapi.client.request({
                path: "https://www.googleapis.com/drive/v3/files/" + id,
                method: "GET",
                params: {alt: "media"}  // Para que devuelva el fichero y no los metadatos.
-            }).then(response => resolve(response.result));
+            }).then(response => {
+                  this._content = response.result;
+                  resolve(response.result);
+               });
           });
 }
 
 
 /**
- * Sobrescribe el fichero de configuración.
+ * Fija la configuración en el Drive.
  *
  * @param {Object} content: Objeto que será el nuevo contenido.
  *
  * @returns {Promise} Promesa con la respuesta a la acción.
  */
-Config.prototype.write = function(content) {
+Config.prototype.set = function(content) {
    return new Promise(async resolve => {
             gapi.client.request({
                path: "https://www.googleapis.com/upload/drive/v3/files/" + await this.id,
                method: "PATCH",
                body: JSON.stringify(content),
-            }).then(response => resolve(response));
+            }).then(response => {
+                  this._content = content;
+                  resolve(response);
+               });
           });
 }
 
@@ -115,10 +153,32 @@ Config.prototype.remove = function() {
                path: "https://www.googleapis.com/drive/v3/files/" + await this.id,
                method: "DELETE"
             }).then(response => {
-                  this._id = null;
+                  this._content = this._id = null;
                   resolve(response);
                });
           });
 }
+
+
+/*
+Config.prototype.removeAll = function() {
+   const batch = gapi.client.newBatch();
+   gapi.client.request({
+      path: "https://www.googleapis.com/drive/v3/files",
+      method: "GET",
+      params: { spaces: "appDataFolder", }
+   }).then(response => {
+         response.result.files.forEach(f => {
+            batch.add(gapi.client.request({
+                  path: "https://www.googleapis.com/drive/v3/files/" + f.id,
+                  method: "DELETE"
+               }));
+         });
+         if(response,result.files.length > 0) {
+            batch.then(response => console.log("DEBUG: Borrado", response));
+         }
+   });
+}
+*/
 
 export default Config; 
