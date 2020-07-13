@@ -1,5 +1,5 @@
 import OAuthClient from "./auth.js";
-import * as api from "./api.js";
+import * as api from "./api";
 import Config from "./config.js";
 
 function crearCliente(name, params) {

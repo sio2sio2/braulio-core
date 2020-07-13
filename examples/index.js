@@ -89,7 +89,7 @@ function interfaz(client) {
 
    document.getElementById("im").addEventListener("click", function(e) {
       clearPre();
-      client.api.crearDepartamentos("borrar@iescastillodeluna.es",
+      client.api.crearClaustro("borrar@iescastillodeluna.es",
          [{
             email: "borrar2@iescastillodeluna.es",
             nombre: "Borrarlo2"
@@ -109,7 +109,7 @@ function interfaz(client) {
       clearPre();
       try {
          var i = 1;
-         for await (const miembro of client.api.listarMiembros("borrar@iescastillodeluna.es").iter()) {
+         for await (const miembro of client.api.obtMiembros("borrar@iescastillodeluna.es").iter()) {
             appendPre(i + ". " + miembro.email + " (" + miembro.type + ")");
             i++;
          } 

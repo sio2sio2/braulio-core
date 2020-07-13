@@ -19,7 +19,7 @@ ahorra tiempo y esfuerzo.
 El repositorio no contiene implementación de interfaz web alguna, sólo contiene
 el código Javascript que conecta con las [APIs de
 Google](https://developers.google.com/apis-explorer). Para ella, consulte
-[braulio-app](https://github.io/sio2sio2/braulio-app).
+[braulio-app](https://github.com/sio2sio2/braulio-app).
 
 ## Preparación del dominio
 
@@ -230,6 +230,8 @@ cliente.addEventListener("succeed", function(e) {  // this es cliente
 });
 
 ~~~
+
+### Autenticación
 
 ### Configuración
 
