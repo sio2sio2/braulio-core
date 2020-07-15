@@ -1,6 +1,7 @@
 import OAuthClient from "./auth.js";
 import * as api from "./api";
-import Config from "./config.js";
+import Config from "./config";
+import Departamentos from "./departamentos.js";
 
 function crearCliente(name, params) {
    const cliente = new OAuthClient(Object.assign(params, {
@@ -13,16 +14,15 @@ function crearCliente(name, params) {
 
    // Consigue el fichero de configuración al identificarse.
    // Si no hay configuración, se desencadena el evento noconfig.
-   cliente.addEventListener("signedin", e => {
+   cliente.addEventListener("signedin", async e => {
       const config = e.target.config = new Config(name);
-      config.isEmpty.then(empty => {
-         if(empty) {
-            (e.target._events["noconfig"] || []).forEach(f => f.call(e.target, {
-               type: "noconfig",
-               target: this
-            }));
-         }
-      });
+
+      await config.get();
+
+      (e.target._events["noconfig"] || []).forEach(f => f.call(e.target, {
+         type: "noconfig",
+         target: this
+      }));
    });
    cliente.addEventListener("signedout", e => e.target.config = null);
 
@@ -31,4 +31,4 @@ function crearCliente(name, params) {
    return cliente;
 }
 
-export default crearCliente;
+export default {crearCliente, Departamentos};

@@ -38,6 +38,25 @@ export function obtGrupos(args) {
 }
 
 
+export function crearGrupo(info) {
+   return gapi.client.request({
+            path: "https://www.googleapis.com/admin/directory/v1/groups",
+            method: "POST",
+            body: info
+          });
+}
+
+
+export function actualizarGrupo(id, info) {
+   return gapi.client.request({
+            path: `https://www.googleapis.com/admin/directory/v1/groups/${id}`,
+            method: "PUT",
+            body: info
+          });
+}
+
+
+// TODO: Hay que borrar esto, porque se implementa en src/departamentos.js
 /**
  * Crea el claustro de profesores como el grupo que incluye
  * a todos los departamentos del instituto.

@@ -1,6 +1,10 @@
 {
-   "claustro": "claustro",
-   "alumnos": "alumnos",
+   "claustro": {
+      "nombre": "Claustro"
+   },
+   "alumnos": {
+      "nombre": "Alumnos"
+   },
    "departamentos": [
       {
          "nombre": "Filosofía",

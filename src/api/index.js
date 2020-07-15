@@ -7,8 +7,6 @@ export function testGroupsRequest(grupo) {
    }).then(response => console.log(response.body), error => console.log(error));
 }
 
-// str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-
 import {obtUsuarios, crearProfesores, crearAlumnos} from "./usuarios.js";
 import {obtGrupos, crearClaustro} from "./grupos.js";
 import {obtMiembros, vaciarGrupo, poblarGrupo} from "./miembros.js";

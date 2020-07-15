@@ -85,8 +85,8 @@ function interfaz(client) {
          console.log(error.body);
       }
 
-      content = await client.config.get();
-      console.log("DEBUG", content, await client.config.isEmpty);
+      // content = await client.config.get();
+      // console.log("DEBUG", content, await client.config.isEmpty);
       // client.config.set({"ab": 1, "xxDDxx": 12345}).then(response => console.log("DEBUGx", response));
       // client.config.remove(response => console.log(response));
    });
@@ -142,11 +142,11 @@ function interfaz(client) {
 }
 
 window.onload = function(e) {
-   const client = B("config.json", {
+   const cliente = B.crearCliente("config.json", {
       clientId: clientId,
       apiKey: apiKey,
       hosted_domain: hosted_domain
    });
-   interfaz(client);
-   client.init();
+   interfaz(cliente);
+   cliente.init();
 }

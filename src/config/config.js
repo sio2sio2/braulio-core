@@ -1,4 +1,7 @@
 import DEFAULT_CONFIG from "./config.json";
+import {procesar} from "./departamentos.js";
+
+const singleton = null;
 
 /**
  * Manipula la configuración del programa almacenada en el Drive del usuaario.
@@ -6,6 +9,9 @@ import DEFAULT_CONFIG from "./config.json";
  * @param {String} name: Nombre del fichero de configuración.
  */
 function Config(name) {
+   if(singleton) return singleton;
+   singleton = this;
+
    Object.defineProperties(this, {
       "_id": {
          enumerable: false,
@@ -13,6 +19,11 @@ function Config(name) {
          value: null
       },
       "name": { value: name },
+      "_nueva": { 
+         enumerable: false,
+         writable: true,
+         value: false
+      },
       "_content": {
          enumerable: false,
          writable: true,
@@ -32,21 +43,9 @@ Object.defineProperties(Config.prototype, {
          return this._id;
       }
    },
-   /**
-    *  Indica si la configuración está vacío (lo que
-    *  significa que habrá que definirla inicialmente.
-    */
-   isEmpty: {
-      get() {
-         return new Promise(resolve => {
-            this.get().then(content => resolve(Object.keys(content).length === 0));
-         })
-      }
-   },
-   /**
-    * Preconfiguración para crear la configuración ex-novo.
-    */
-   seed: { value: DEFAULT_CONFIG }
+   nueva: {
+      get() { return this._nueva };
+   }
 });
 
 
@@ -78,13 +77,14 @@ function getFileID(name) {
                   path: "https://www.googleapis.com/drive/v3/files",
                   method: "POST",
                   body: params
-               }).then(response => {
+               }).then(async response => {
                      const id = response.result.id;
                      gapi.client.request({
                         path: "https://www.googleapis.com/upload/drive/v3/files/" + id,
                         method: "PATCH",
-                        body: {},  // Configuración vacía.
+                        body: await Config.procesar(DEFAULT_CONFIG)
                      }).then(response => resolve(id));
+                     this._nueva = true;
                   });
                break;
             case 1:  // El fichero existe, se devuelve su ID.
@@ -142,6 +142,11 @@ Config.prototype.set = function(content) {
 }
 
 
+Config.procesar = function(info) {
+   return procesar(info);
+}
+
+
 /**
  * Elimina el fichero de configuración
  *
@@ -154,6 +159,7 @@ Config.prototype.remove = function() {
                method: "DELETE"
             }).then(response => {
                   this._content = this._id = null;
+                  this._nueva = true;
                   resolve(response);
                });
           });
