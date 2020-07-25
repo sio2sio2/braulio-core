@@ -101,7 +101,7 @@ module.exports = env => {
          filename: filename,
          libraryTarget: "umd",
          umdNamedDefine: true,
-         library: "B",
+         library: "Braulio",
          libraryExport: "default"
       },
       plugins: [

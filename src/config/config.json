@@ -1,70 +1,69 @@
 {
    "claustro": {
-      "nombre": "Claustro"
+      "name": "Claustro"
    },
    "alumnos": {
-      "nombre": "Alumnos"
+      "name": "Alumnos"
    },
    "departamentos": [
       {
-         "nombre": "Filosofía",
+         "name": "Filosofía",
          "puestos": [ "~*.590001" ]
       },
       {
-         "nombre": "Clásicas",
+         "name": "Clásicas",
          "puestos": [ "00590002" , "00590003" ]
       },
       {
-         "nombre": "Lengua castellana y Literatura",
+         "name": "Lengua castellana y Literatura",
          "puestos": [ "0059004" ]
       },
       {
-         "nombre": "Geografía e Historia",
+         "name": "Geografía e Historia",
          "puestos": [ "~.*590005" ]
       },
       {
-         "nombre": "Matemáticas",
+         "name": "Matemáticas",
          "puestos": [ "~.*590006" ]
       },
       {
-         "nombre": "Física y Química",
+         "name": "Física y Química",
          "puestos": [ "~.*590007" ]
       },
       {
-         "nombre": "Biología y Geología",
+         "name": "Biología y Geología",
          "puestos": [ "~.*590008" ]
       },
       {
-         "nombre": "Dibujo",
+         "name": "Dibujo",
          "puestos": [ "~.*590009" ]
       },
       {
-         "nombre": "Francés",
+         "name": "Francés",
          "puestos": [ "00590010" ]
       },
       {
-         "nombre": "Inglés",
+         "name": "Inglés",
          "puestos": [ "00590011" ]
       },
       {
-         "nombre": "Música",
+         "name": "Música",
          "puestos": [ "~.*590016" ]
       },
       {
-         "nombre": "Educación Física",
-         "usuario": "educacionfísica",
+         "name": "Educación Física",
          "puestos": [ "~.*590017" ]
       },
       {
-         "nombre": "Orientación",
+         "name": "Orientación",
          "puestos": [ "00590018", "~00597.*", "00590058", "00590059" ]
       },
       {
-         "nombre": "Tecnología",
+         "name": "Tecnología",
          "puestos": [ "~.*590019" ]
       },
       {
-         "nombre": "Economía",
+         "name": "Economía",
          "puestos": [ "~.*590061", "~.*590105" ]
       }
    ],

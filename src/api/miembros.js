@@ -37,6 +37,57 @@ export function obtMiembros(groupKey, args) {
 
 
 /**
+ * Borrar un miembro de un grupo.
+ *
+ * @param {String} grupo: Identificador o dirección del grupo.
+ * @param {String} miembro: Identificador o dirección del miembro.
+ */
+function borrar(grupo, miembro) {
+   return gapi.client.request({
+            path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members/${miembro}`,
+            method: "DELETE"
+          });
+}
+
+
+/**
+ * Devuelve la promesa de eliminación de un miembro.
+ */
+export function borrarMiembro(grupo, miembro) {
+   return new Promise((resolve, reject) => {
+      borrar(grupo, miembro)
+         .then(response => resolve(response))
+         .catch(error => reject(error.result.error));
+   });
+}
+
+
+/**
+ * Añade un miembro a un grupo.
+ *
+ * @param {String} grupo: Identificador o dirección del grupo.
+ * @param {String} miembro: Identificador o Dirección del miembro.
+ */
+export function agregarMiembro(grupo, miembro) {
+   const body = { role: "MEMBER" };
+   if(miembro.includes('@')) body.email = miembro
+   else body.id = miembro;
+   return gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members`,
+      method: "POST",
+      body: body
+   });
+}
+
+
+export function agregarMiembros(grupo, miembros) {
+   const batch = gapi.client.newBatch();
+   miembros.forEach(m => batch.add(agregarMiembro(grupo, m), {id: m.email}));
+   return batch;
+}
+
+
+/**
  * Elimina todos los miembros de un grupo
  *
  * @param {String} grupo: Dirección del grupo del que se quieren obtener los miembros.
@@ -49,56 +100,15 @@ export async function vaciarGrupo(grupo) {
    const batch = gapi.client.newBatch();
 
    const miembros = await obtMiembros(grupo).get();
-   for(const m of miembros) {
-      batch.add(gapi.client.directory.members.delete({
-            groupKey: grupo,
-            memberKey: m.email
-         }), {id: m.email});
-   }
+   for(const m of miembros) batch.add(borrar(grupo, m.email));
 
-   return new Promise(resolve => {
+   return new Promise((resolve, reject) => {
       if(miembros.length) {
          batch.then(response => {
             resolve(Object.fromEntries(Object.entries(response.result)
                .map(([email, value]) => [email, value.result && value.result.error || {code: value.status, message: "OK"}])));
-         }); 
+         }).catch(error => reject(error.result.error)); 
       }
       else resolve({});
-   });
-}
-
-
-/**
- * Puebla de miembros un grupo.
- *
- * @param {Object} grupo: Objeto que representa al grupo y que se intanta crear,
- *    por si no existe. El objeto es {email: xxx, name: xxx, description: xxx}
- * @param {array} miembros: Direcciones de los miembros que pertenecerán al grupo.
- */
-export function poblarGrupo(grupo, miembros) {
-   return new Promise(resolve => {
-
-      // Intenta crear el grupo por si no existe.
-      gapi.client.directory.groups.insert(grupo)
-        .then(response => agregarMiembros({dpto: {code: response.status, message: null}}),
-              error => agregarMiembros({dpto: error.result.error}));
-
-      function agregarMiembros(resgrupo) {
-         // Eliminamos miembros repetidos
-         miembros = miembros.filter((e, i) => miembros.indexOf(e) === i);
-
-         const batch = gapi.client.newBatch(),
-               requests = miembros.map(member => gapi.client.directory.members.insert({
-            groupKey: grupo.email,
-            email: member
-         }));
-
-         for(let i=0; i<miembros.length; i++) batch.add(requests[i], {id: miembros[i]});
-         batch.then(response => {
-            var results = Object.fromEntries(Object.entries(response.result)
-               .map(([email, value]) => [email, value.result.error || {code: value.status, message: "OK"}]));
-            resolve(Object.assign(resgrupo, {members: results}));
-         });
-      } 
    });
 }

@@ -8,19 +8,61 @@ function clearPre() {
    pre.innerHTML = "";
 }
 
+
+// Convierte la configuración precargada en apta.
+// Para ello, obtiene la dirección de email a partir del nombre
+// quitando espacios y caracteres no ingleses.
+function generarConfiguracion(client) {
+   const utils = client.config.utils,
+         config = client.config.seed;
+
+   config.claustro.email = config.claustro.email || utils.generarCuentaDepartamento(config.claustro.name);
+   config.alumnos.email = config.alumnos.email || utils.generarCuentaDepartamento(config.alumnos.name);
+   config.departamentos.forEach(dpto => {
+      dpto.email = dpto.email || utils.generarCuentaDepartamento(dpto.name);
+      dpto.description = `Departamento de ${dpto.name}`;
+   });
+   config.grupos.forEach(gr => gr.email = gr.email || utils.generarCuentaGrupo(gr.name, true));
+
+   return config;
+}
+
+
 function interfaz(client) {
    client.addEventListener("succeed", function(e) {
       document.getElementById("authorize").addEventListener("click", e => {
          client[e.target.textContent === "Entrar"?"signin":"signout"](e);
       });
+      window.CONFIG = client.config;
    });
 
    client.addEventListener("failed", function(e) {
-      appendPre(JSON.stringify(error, null, 2));
+      appendPre(JSON.stringify(e.error, null, 2));
    });
 
+   // Cuando no hay creada configuración, debe construirse una a partir de la semilla.
    client.addEventListener("noconfig", function(e) {
-      appendPre("NO HAY CONFIGURACIÖN. Debería forzarse a crear la mínima indispensable.");
+      // Añadimos los nombres de cuentas a la semilla de configuración.
+      const config = generarConfiguracion(client);
+
+      // Interactivamente, el usuario debería poder cambiar los nombres de cuentas
+      // y añadir otros departamentos y grupos.
+
+      // Añadimos el prefijo "BORRAR-" a todos estos grupos para no interferir
+      // con los grupos ya creados en el dominio.
+      config.claustro.email = `BORRAR-${config.claustro.email}`
+      config.alumnos.email = `BORRAR-${config.alumnos.email}`
+      config.departamentos = config.departamentos.map(dpto => Object.assign(dpto, {email: `BORRAR-${dpto.email}`}));
+      config.grupos = config.grupos.map(gr => Object.assign(gr, {email: `BORRAR-${gr.email}`}));
+
+      client.config.inicializar(config).then(response => {
+         console.log("DEBUG: seed", config);
+         console.log("DEBUG", response);
+      });
+
+      appendPre("NO HAY CONFIGURACIÖN: Debe forzarse al usuario a definir una.\n" +
+                "En en el ejemplo. Construimos una ex novo sin intervención del usuario.");
+
    });
 
    client.addEventListener("signedin", function(e) {
@@ -73,6 +115,7 @@ function interfaz(client) {
    });
 
    document.getElementById("lgu").addEventListener("click", async function(e) {
+      /*
       clearPre();
       try {
          var i = 1;
@@ -84,11 +127,28 @@ function interfaz(client) {
       catch(error) {
          console.log(error.body);
       }
+      */
 
       // content = await client.config.get();
       // console.log("DEBUG", content, await client.config.isEmpty);
       // client.config.set({"ab": 1, "xxDDxx": 12345}).then(response => console.log("DEBUGx", response));
-      // client.config.remove(response => console.log(response));
+      // client.config.remove().then(response => console.log("DEBUGr", response));
+      
+      client.api.obtGrupos({query: "email:BORRAR-*"}).get().then(grupos => {
+         console.log("DEBUG: Lista", grupos);
+         if(grupos.length === 0) return;
+
+         const batch = gapi.client.newBatch();
+         for(const grupo of grupos) {
+            if(grupo.name === "Música") continue;
+            batch.add(client.api.borrarGrupo(grupo.email));
+         }
+         batch.then(response => {
+            client.config.remove().then(r => {
+               console.log("DEBUG", response);
+            });
+         });
+      });
    });
 
    document.getElementById("im").addEventListener("click", function(e) {
@@ -125,24 +185,25 @@ function interfaz(client) {
 
    document.getElementById("vm").addEventListener("click", function(e) {
       const grupo = "borrar@iescastillodeluna.es";
-      client.api.vaciarGrupo(grupo)
-         .then(response => {
+      try {
+         client.api.vaciarGrupo(grupo).then(response => {
             clearPre();
             var i = 1;
             for(const email in response) {
                appendPre(i + ". " + email + ": " + response[email].code + " (" + response[email].message + ")");
                i++;
             }
-         })
-         .catch(error => {
-            clearPre();
-            appendPre("ERROR: " + (error.message || error.body));
          });
+      }
+      catch(error) {
+         console.warn("ERROR CAZADO:", error);
+      }
+
    });
 }
 
 window.onload = function(e) {
-   const cliente = B.crearCliente("config.json", {
+   const cliente = Braulio("config.json", {
       clientId: clientId,
       apiKey: apiKey,
       hosted_domain: hosted_domain

@@ -8,9 +8,8 @@ export function testGroupsRequest(grupo) {
 }
 
 import {obtUsuarios, crearProfesores, crearAlumnos} from "./usuarios.js";
-import {obtGrupos, crearClaustro} from "./grupos.js";
-import {obtMiembros, vaciarGrupo, poblarGrupo} from "./miembros.js";
+import {obtGrupos, borrarGrupo} from "./grupos.js";
+import {obtMiembros, vaciarGrupo, poblarGrupo, borrarMiembro} from "./miembros.js";
 
-export {obtUsuarios, crearProfesores, crearAlumnos,
-        obtGrupos, crearClaustro,
-        obtMiembros, vaciarGrupo, poblarGrupo}
+export {obtUsuarios, crearProfesores, crearAlumnos, borrarGrupo,
+        obtGrupos, obtMiembros, vaciarGrupo, borrarMiembro};

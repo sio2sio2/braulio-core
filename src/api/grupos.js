@@ -1,5 +1,4 @@
 import Listar from "./listar.js";
-import {poblarGrupo} from "./miembros.js";
 
 /**
  * Obtiene una lista de de grupos.
@@ -37,6 +36,17 @@ export function obtGrupos(args) {
    return Listar(query_params, "result.groups", limit);
 }
 
+/**
+ * Obtiene la información sobre un grupo.
+ *
+ * @param {String{ grupo: La dirección o el identificador del grupo.
+ */
+export function obtGrupo(grupo) {
+   return gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}`,
+      method: "GET"
+   });
+}
 
 export function crearGrupo(info) {
    return gapi.client.request({
@@ -56,49 +66,14 @@ export function actualizarGrupo(id, info) {
 }
 
 
-// TODO: Hay que borrar esto, porque se implementa en src/departamentos.js
 /**
- * Crea el claustro de profesores como el grupo que incluye
- * a todos los departamentos del instituto.
+ * Borra un grupo.
  *
- * @param {String} grupo: Nombre del grupo que representa al claustro.
- * @param {array} departamentos: La lista de grupos que son departamentos.
+ * @param {String} id: Identificador o dirección del grupo.
  */
-export async function crearClaustro(nombre, departamentos) {
-
-   const batch = gapi.client.newBatch(),
-         emails = departamentos.map(d => d.email);
-
-   // Elimina departamentos repetidos.
-   departamentos = departamentos
-      .filter((d, i) => emails.indexOf(d.email) === i)  // Elimina departamentos repetidos.
-      .map(d => Object({
-         email: d.email,
-         name: d.nombre,
-         description: "Departamento de " + d.nombre
-      }));
-
-   if(departamentos.length) {
-      departamentos.forEach(d => {
-         batch.add(gapi.client.request({
-            path: "https://www.googleapis.com/admin/directory/v1/groups",
-            method: "POST",
-            body: d
-         }), {id: d.email})
-      });
-
-      try {
-         await new Promise((resolve, reject) => batch.then(response => resolve(response),
-                                                           error => reject(error)));
-      }
-      catch(error) {
-         console.warn("Todos los departamentos estaban ya creados");
-      }
-   }
-
-   return poblarGrupo({
-            email: nombre,
-            name: "Claustro de profesores",
-            description: "Claustro que incluye todos los departamentos didácticos y de familia profesional"
-          }, departamentos.map(d => d.email));
+export function borrarGrupo(id) {
+   return gapi.client.request({
+            path: `https://www.googleapis.com/admin/directory/v1/groups/${id}`,
+            method: "DELETE"
+          });
 }

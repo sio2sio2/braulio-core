@@ -1,10 +1,14 @@
 import DEFAULT_CONFIG from "./config.json";
-import {procesar} from "./departamentos.js";
+import * as utils from "./utils.js";
+import {inicializar} from "./init.js";
+import {obtGrupo} from "../api/grupos.js";
 
-const singleton = null;
+const default_config = JSON.stringify(DEFAULT_CONFIG);
+let singleton = null;
 
 /**
  * Manipula la configuración del programa almacenada en el Drive del usuaario.
+ * Se utiliza el patrón Singleton para devolver siempre el mismo objeto
  *
  * @param {String} name: Nombre del fichero de configuración.
  */
@@ -18,12 +22,7 @@ function Config(name) {
          writable: true,
          value: null
       },
-      "name": { value: name },
-      "_nueva": { 
-         enumerable: false,
-         writable: true,
-         value: false
-      },
+      "name": { value: name || "config.json" },
       "_content": {
          enumerable: false,
          writable: true,
@@ -43,8 +42,21 @@ Object.defineProperties(Config.prototype, {
          return this._id;
       }
    },
-   nueva: {
-      get() { return this._nueva };
+   /**
+    * Promesa qie indica si el fichero de configuración está vacío.
+    */
+   vacia: {
+      get() { 
+         return new Promise(async resolve => {
+                  const config = await this.get();
+                  resolve(Object.keys(config).length === 0);
+                });
+      }
+   },
+   utils: { value: utils },
+   inicializar: { value: inicializar},
+   seed: {
+      get() { return JSON.parse(default_config); }
    }
 });
 
@@ -52,6 +64,8 @@ Object.defineProperties(Config.prototype, {
 /**
  * Obtiene el identificador del fichero de configuración y, si no
  * existe, crea el fichero JSON vació y devuelve su identificador.
+ *
+ * @returns {Promise}: Promesa con el identificador.
  */
 function getFileID(name) {
    return new Promise((resolve, reject) => {
@@ -65,7 +79,7 @@ function getFileID(name) {
       }).then(response => {
          const files = response.result.files;
          switch(files.length) {
-            case 0:  // El fichero no existe: hay que crearlo.
+            case 0:  // El fichero no existe: se crea
                console.warn("No hay configuración previa");
                const params = {
                         name: name,
@@ -82,9 +96,8 @@ function getFileID(name) {
                      gapi.client.request({
                         path: "https://www.googleapis.com/upload/drive/v3/files/" + id,
                         method: "PATCH",
-                        body: await Config.procesar(DEFAULT_CONFIG)
+                        body: {}
                      }).then(response => resolve(id));
-                     this._nueva = true;
                   });
                break;
             case 1:  // El fichero existe, se devuelve su ID.
@@ -114,8 +127,11 @@ Config.prototype.get = function() {
                method: "GET",
                params: {alt: "media"}  // Para que devuelva el fichero y no los metadatos.
             }).then(response => {
-                  this._content = response.result;
-                  resolve(response.result);
+                  // Añadimos emails, descripciones, etc.
+                  getInfo(response.result).then(response => {
+                     this._content = response;
+                     resolve(response);
+                  });
                });
           });
 }
@@ -133,17 +149,12 @@ Config.prototype.set = function(content) {
             gapi.client.request({
                path: "https://www.googleapis.com/upload/drive/v3/files/" + await this.id,
                method: "PATCH",
-               body: JSON.stringify(content),
+               body: JSON.stringify(mrproper(content)),
             }).then(response => {
                   this._content = content;
                   resolve(response);
                });
           });
-}
-
-
-Config.procesar = function(info) {
-   return procesar(info);
 }
 
 
@@ -159,7 +170,6 @@ Config.prototype.remove = function() {
                method: "DELETE"
             }).then(response => {
                   this._content = this._id = null;
-                  this._nueva = true;
                   resolve(response);
                });
           });
@@ -186,5 +196,75 @@ Config.prototype.removeAll = function() {
    });
 }
 */
+
+
+/**
+ * Elimina de la configuración proporcionada
+ * las dirección de email, las descripciones y los nombres
+ * (útil para guardar la configuración en el Drive).
+ */
+function mrproper(config) {
+   if(config.email && config.id) {
+      delete config.email;
+      delete config.description;
+      delete config.name;
+   }
+   for(const attr in config) {
+      switch(config[attr].constructor) {
+         case Object:
+            mrproper(config[attr]);
+            break;
+         case Array:
+            for(const element of config[attr]) mrproper(element);
+      }
+   }
+
+   return config;
+}
+
+/**
+ * Añade a la configuración email, descripción y nombre.
+ * (Útil tras cargarla desde el Drive).
+ */
+function getInfo(config, deep, res) {
+   deep = deep || 0;
+   res = res || {};
+
+   if(config.id) {
+      res[config.id] = config;
+   }
+   for(const attr in config) {
+      switch(config[attr].constructor) {
+         case Object:
+            getInfo(config[attr], deep + 1, res);
+            break;
+         case Array:
+            for(const element of config[attr]) getInfo(element, deep + 1, res);
+      }
+   }
+
+   if(deep > 0) return
+   if(Object.keys(res) === 0) return Promise.resolve(config);
+
+   const batch = gapi.client.newBatch();
+   for(const id in res) {
+      batch.add(obtGrupo(id), {id: id});
+   }
+
+   return new Promise((resolve, reject) => {
+      batch.then(response => {
+         for(let [id, result] of Object.entries(response.result)) {
+            if(result.error) reject(`Imposible obtener la información del grupo con ID ${id}`);
+            result = result.result;
+            if(result.email) res[id].email = result.email;
+            if(result.name) res[id].name = result.name;
+            if(result.description) res[id].description = result.description;
+         }
+         resolve(config);
+      }).catch(error => {
+         reject("Imposible obtener la información de los grupos");
+      });
+   });
+}
 
 export default Config; 
