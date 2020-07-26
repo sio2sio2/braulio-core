@@ -14,5 +14,6 @@ export function isID(string) {
  * Añade el dominio en caso de que false.
  */
 export function patchString(string) {
-   return (string.includes('@') || isID(string))?string:`${string}@${hosted_domain}`;
+   const domain = gapi.auth2.getAuthInstance().currentUser.get().getHostedDomain();
+   return (string.includes('@') || isID(string))?string:`${string}@${domain}`;
 }

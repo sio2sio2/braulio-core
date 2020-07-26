@@ -8,7 +8,8 @@ function crearCliente(name, params) {
                      scope: ("https://www.googleapis.com/auth/admin.directory.user " +
                              "https://www.googleapis.com/auth/admin.directory.group " +
                              "https://www.googleapis.com/auth/apps.groups.settings " +
-                             "https://www.googleapis.com/auth/drive.appdata")
+                             "https://www.googleapis.com/auth/drive.appdata " +
+                             "https://www.googleapis.com/auth/admin.directory.orgunit")
                    }));
 
    // Consigue el fichero de configuración al identificarse.

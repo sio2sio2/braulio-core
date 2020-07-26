@@ -33,6 +33,7 @@ function interfaz(client) {
       document.getElementById("authorize").addEventListener("click", e => {
          client[e.target.textContent === "Entrar"?"signin":"signout"](e);
       });
+
       window.CONFIG = client.config;
    });
 
@@ -40,28 +41,31 @@ function interfaz(client) {
       appendPre(JSON.stringify(e.error, null, 2));
    });
 
-   // Cuando no hay creada configuración, debe construirse una a partir de la semilla.
+   // Cuando no se detecta configuración previa,
+   // es necesario generar una a partir de la semilla.
+   // Debe ser un proceso interactivo: aquí hacemos
+   // una autogeneración con generarConfiguración.
    client.addEventListener("noconfig", function(e) {
-      // Añadimos los nombres de cuentas a la semilla de configuración.
       const config = generarConfiguracion(client);
 
-      // Interactivamente, el usuario debería poder cambiar los nombres de cuentas
-      // y añadir otros departamentos y grupos.
 
-      // Añadimos el prefijo "BORRAR-" a todos estos grupos para no interferir
-      // con los grupos ya creados en el dominio.
-      config.claustro.email = `BORRAR-${config.claustro.email}`
-      config.alumnos.email = `BORRAR-${config.alumnos.email}`
-      config.departamentos = config.departamentos.map(dpto => Object.assign(dpto, {email: `BORRAR-${dpto.email}`}));
-      config.grupos = config.grupos.map(gr => Object.assign(gr, {email: `BORRAR-${gr.email}`}));
+      // Añadimos el prefijo "BORRAR-" a todos los grupos
+      // para no interferir con los ya creados en el dominio.
+      {
+         config.claustro.email = `BORRAR-${config.claustro.email}`
+         config.alumnos.email = `BORRAR-${config.alumnos.email}`
+         config.departamentos = config.departamentos.map(dpto => Object.assign(dpto, {email: `BORRAR-${dpto.email}`}));
+         config.grupos = config.grupos.map(gr => Object.assign(gr, {email: `BORRAR-${gr.email}`}));
+      }
+
+      appendPre("NO HAY CONFIGURACIÖN: Debe forzarse al usuario a definir una.\n" +
+                "En en el ejemplo. Construimos una ex novo sin intervención del usuario.");
 
       client.config.inicializar(config).then(response => {
          console.log("DEBUG: seed", config);
          console.log("DEBUG", response);
+         appendPre("\n\nConfiguración GENERADA");
       });
-
-      appendPre("NO HAY CONFIGURACIÖN: Debe forzarse al usuario a definir una.\n" +
-                "En en el ejemplo. Construimos una ex novo sin intervención del usuario.");
 
    });
 
@@ -128,7 +132,6 @@ function interfaz(client) {
    });
 
    document.getElementById("lgu").addEventListener("click", async function(e) {
-      /*
       clearPre();
       try {
          var i = 1;
@@ -140,29 +143,40 @@ function interfaz(client) {
       catch(error) {
          console.log(error.body);
       }
-      */
+   });
 
-      // content = await client.config.get();
-      // console.log("DEBUG", content, await client.config.isEmpty);
-      // client.config.set({"ab": 1, "xxDDxx": 12345}).then(response => console.log("DEBUGx", response));
-      // client.config.remove().then(response => console.log("DEBUGr", response));
-      
+
+   document.getElementById("bc").addEventListener("click", async function(e) {
+      clearPre();
       client.api.obtGrupos({query: "email:BORRAR-*"}).get().then(grupos => {
-         console.log("DEBUG: Lista", grupos);
-         if(grupos.length === 0) return;
+         // Evitamos aposta eliminar un grupo.
+         grupos = grupos.filter(gr => gr.name !== "Música");
+
+         if(grupos.length === 0) {
+            client.config.remove().then(r => {
+               appendPre("Borrada la configuración:");
+            });
+            return;
+         }
 
          const batch = gapi.client.newBatch();
          for(const grupo of grupos) {
-            if(grupo.name === "Música") continue;
-            batch.add(client.api.borrarGrupo(grupo.email));
+            batch.add(client.api.borrarGrupo(grupo.email), {id: grupo.email});
          }
          batch.then(response => {
             client.config.remove().then(r => {
-               console.log("DEBUG", response);
+               appendPre("Borrada la configuración y los grupos:");
+               let i = 0;
+               for(const [email, result] of Object.entries(response.result)) {
+                  i++;
+                  const res = result.status === 204?"OK":"Fallo";
+                  appendPre(`${i}. ${email}: ${res}.`);
+               }
             });
-         });
+         })
       });
    });
+
 
    document.getElementById("im").addEventListener("click", function(e) {
       clearPre();

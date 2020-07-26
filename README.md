@@ -11,7 +11,7 @@
    - Grupos de alumnos.
    - Equipos educativos.
 
-Por supuesto, esta gestión puede hacerse manualmente a tavés de la [interfaz
+Por supuesto, esta gestión puede hacerse manualmente a través de la [interfaz
 oficial](https://admin.google.com:), pero **Braulio** está diseñada para hacer
 éstas específicamente, así que automatiza o semiautomatiza muchas de ellas y
 ahorra tiempo y esfuerzo.
@@ -133,12 +133,12 @@ coloque los elementos ``script``:
 ~~~
 
 En su código *Javascript* podrá utilizar el cliente *Braulio* a través de la
-función ``B``:
+función ``Braulio``:
 
 ~~~javascript
 
 window.onload = function(e) {
-   const cliente = B("config.json", {
+   const cliente = Braulio("config.json", {
       clientId: "###---CLIENT ID---###,
       apiKey: "###---API KEY---###",
       hosted_domain: "iesmiinstituto.com"

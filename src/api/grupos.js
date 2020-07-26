@@ -51,7 +51,8 @@ export function obtGrupo(grupo) {
 }
 
 export function crearGrupo(info) {
-   if(info.email && !info.email.includes('@')) info.email = `${info.email}@${hosted_domain}`;
+   const domain = gapi.auth2.getAuthInstance().currentUser.get().getHostedDomain();
+   if(info.email && !info.email.includes('@')) info.email = `${info.email}@${domain}`;
    return gapi.client.request({
             path: "https://www.googleapis.com/admin/directory/v1/groups",
             method: "POST",
