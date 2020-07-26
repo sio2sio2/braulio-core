@@ -195,28 +195,33 @@ const cliente = Braulio("config.json", {
       });
 
 // Código javascript relacionado con los eventos *succeed*,
-// *failed*, *noconfig*, *signin* y *signout*. 
+// *failed*, *noconfig*, *signedin* y *signedout*. 
 
 cliente.init();
 
 ~~~
 
+El primer parámetro define el nombre que se usará para el fichero de
+configuración que se almacena en el Drive del usuario que se autentica. El
+segundo argumento define los parámetros que se usarán para la autenticación.
+
 El cliente no se inicializa propiamente hasta que no se usa su método
 ``.init()``, pero antes de invocarlo es necesario que esté cargado todo el
 código relacionado con los cinco eventos asociados a la inicialización:
 
-| Evento   | Se dispara cuando....        |
-| -------- | ---------------------------- |
-| succeed  | se inicializó con éxito.     |
-| failed   | error en la inicialización.  |
-| signin   | se produjo autenticación.    |
-| noconfig | no hay configuración previa. |
-| signout  | hubo desautenticación.       |
+| Evento    | Se dispara cuando....        |
+| --------- | ---------------------------- |
+| succeed   | se inicializó con éxito.     |
+| failed    | error en la inicialización.  |
+| signedin  | se produjo autenticación.    |
+| noconfig  | no hay configuración previa. |
+| signedout | hubo desautenticación.       |
 
 En realidad los tres últimos eventos están relacionados con el proceso de
 autenticación, pero la inicialización intenta una autenticación automática, por
-lo que al menos los eventos de *signin* y **noconfig** es pertinente tenerlos
-cargados antes de proceder a la inicialización.
+lo que al menos las acciones relacionadas con los eventos de *signin* y
+**noconfig** es pertinente tenerlos definidos antes de proceder a la
+inicialización.
 
 Para asociar acciones a los eventos, debe usarse el método
 ``.addeventListener()``:
@@ -224,8 +229,8 @@ Para asociar acciones a los eventos, debe usarse el método
 ~~~javascript
 
 cliente.addEventListener("succeed", function(e) {  // this es cliente
-   console.log(e.type);    // succeed.
-   console.log(e.target);  // cliente.
+   console.log(e.type === "succeed");    // true.
+   console.log(e.target === cliente);    // true.
 
    // Habilitamos el botón que permite la autenticación.
    document.getElementById("authorize").disabled = false;
@@ -233,7 +238,54 @@ cliente.addEventListener("succeed", function(e) {  // this es cliente
 
 ~~~
 
+Échele un ojo al [ejemplo de
+usuo](https://github.com/sio2sio2/braulio-core/tree/master/examples).
+
 ### Autenticación
+
+El objeto que devuelve la función ``Braulio`` tiene dos métodos relacionados con
+la autenticación:
+
+| Método  | Descripción                          |
+| ------- | ------------------------------------ |
+| signin  | Arranca el proceso de autenticación. |
+| signout | Desconecta la aplicación,            |
+
+y dos eventos homónimos:
+
+| Evento    | Se desencadena cuando...              |
+| --------- | ------------------------------------- |
+| signedin  | ... el usuario abre una sesión.       |
+| signedout | ... el usuario sale de la sesión.     |
+
+Por tanto, si planteamos crear un botón para controlar el ingreso del usuario
+podríamos hacer algo como esto:
+
+~~~javascript
+
+// Braulio está asociado a la variable cliente.
+
+document.getElementById("ingreso").onclick = function(e) {
+   const conectado = this.textContent === "Salir",
+         // Si estoy conectado, desconecto; si desconectado, conecto.
+         accion = conectado?"signout":"signin";
+
+   cliente[evento]();
+}
+
+cliente.addEventListener("signedin", function(e) {
+   const button = document.getElementById("ingreso");
+   button.textContent = "Salir";
+
+   console.log(`${cliente.identity.name} <${cliente.identity.email}>`);
+});
+
+cliente.addEventListener("signedin", function(e) {
+   const button = document.getElementById("ingreso");
+   button.textContent = "Entrar";
+});
+
+~~~
 
 ### Configuración
 

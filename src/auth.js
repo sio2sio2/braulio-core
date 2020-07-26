@@ -109,8 +109,7 @@ OAuthClient.prototype.signout = function() {
  * @returns {String} El dominio.
  */
 OAuthClient.prototype.domain = function() {
-   if(!this.identity) return null;
-   else return this.identity.email.split('@')[1];
+   return this.identity?gapi.auth2.getAuthInstance().currentUser.get().getHostedDomain():null;
 }
 
 export default OAuthClient;
