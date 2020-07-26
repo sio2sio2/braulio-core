@@ -90,7 +90,14 @@ function interfaz(client) {
       clearPre();
       var i = 1;
       for await (const user of client.api.obtUsuarios({limit: 60, maxResults: 30}).iter()) {
-         appendPre(i + '. ' + user.primaryEmail + ' (' + user.name.fullName + ')');
+         console.log("DEBUG", user);
+         const cuenta = user.primaryEmail.slice(0, user.primaryEmail.indexOf('@')),
+               ce = client.api.isID(cuenta),
+               cid = client.api.isID(user.id);
+         let pre = "";
+         if(ce) pre = `${cuenta}>>>`
+         else if(!cid) pre = `${user.id}>>>`
+         appendPre(`${pre}${i}. ${user.primaryEmail} (${user.name.fullName})`);
          i++;
       }
       //client.api.testGroupsRequest("informatica@iescastillodeluna.es");
@@ -109,7 +116,13 @@ function interfaz(client) {
       clearPre();
       var i = 1;
       for await (const grp of client.api.obtGrupos().iter()) {
-         appendPre(i + '. ' + grp.email + ' (' + grp.description + ')');
+         const cuenta = grp.email.slice(0, grp.email.indexOf('@')),
+               ce = client.api.isID(cuenta),
+               cid = client.api.isID(grp.id);
+         let pre = "";
+         if(ce) pre = `${cuenta}>>>`
+         else if(!cid) pre = `${grp.id}>>>`
+         appendPre(`${pre}${i}. ${grp.email} (${grp.description})`);
          i++;
       }
    });

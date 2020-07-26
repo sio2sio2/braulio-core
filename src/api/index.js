@@ -10,6 +10,7 @@ export function testGroupsRequest(grupo) {
 import {obtUsuarios, crearProfesores, crearAlumnos} from "./usuarios.js";
 import {obtGrupos, borrarGrupo} from "./grupos.js";
 import {obtMiembros, vaciarGrupo, poblarGrupo, borrarMiembro} from "./miembros.js";
+import {isID} from "./misc.js";
 
 export {obtUsuarios, crearProfesores, crearAlumnos, borrarGrupo,
-        obtGrupos, obtMiembros, vaciarGrupo, borrarMiembro};
+        obtGrupos, obtMiembros, vaciarGrupo, borrarMiembro, isID};

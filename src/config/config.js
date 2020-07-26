@@ -244,7 +244,7 @@ function getInfo(config, deep, res) {
    }
 
    if(deep > 0) return
-   if(Object.keys(res) === 0) return Promise.resolve(config);
+   if(Object.keys(res).length === 0) return Promise.resolve(config);
 
    const batch = gapi.client.newBatch();
    for(const id in res) {

@@ -42,23 +42,11 @@ export function obtMiembros(groupKey, args) {
  * @param {String} grupo: Identificador o dirección del grupo.
  * @param {String} miembro: Identificador o dirección del miembro.
  */
-function borrar(grupo, miembro) {
+export function borrarMiembro(grupo, miembro) {
    return gapi.client.request({
             path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members/${miembro}`,
             method: "DELETE"
           });
-}
-
-
-/**
- * Devuelve la promesa de eliminación de un miembro.
- */
-export function borrarMiembro(grupo, miembro) {
-   return new Promise((resolve, reject) => {
-      borrar(grupo, miembro)
-         .then(response => resolve(response))
-         .catch(error => reject(error.result.error));
-   });
 }
 
 
