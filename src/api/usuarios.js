@@ -1,4 +1,4 @@
-import Listar from "./listar.js";
+import {listarEntidad} from "./misc.js";
 
 /**
  * Obtiene una lista de usuarios.
@@ -41,7 +41,7 @@ import Listar from "./listar.js";
  *       console.log(i + ". " + u.primaryEmail);
  *    }
  */
-export function obtUsuarios(args) {
+export function listar(args) {
    args = args || {};
    const limit = args.limit;
    delete args.limit;
@@ -58,7 +58,7 @@ export function obtUsuarios(args) {
       params: args
    }
 
-   return Listar(query_params, "result.users", limit);
+   return listarEntidad(query_params, "result.users", limit);
 }
 
 

@@ -1,5 +1,4 @@
-import Listar from "./listar.js";
-import {patchString} from "./misc.js";
+import {patchString, listarEntidad} from "./misc.js";
 
 /**
  * Obtiene una lista de de grupos.
@@ -13,7 +12,7 @@ import {patchString} from "./misc.js";
  *
  * Véanse los ejemplos de obtUsuarios.
  */
-export function obtGrupos(args) {
+export function listar(args) {
    args = args || {};
    const limit = args.limit;
    delete args.limit;
@@ -34,7 +33,7 @@ export function obtGrupos(args) {
       params: args
    }
 
-   return Listar(query_params, "result.groups", limit);
+   return listarEntidad(query_params, "result.groups", limit);
 }
 
 /**
@@ -42,7 +41,7 @@ export function obtGrupos(args) {
  *
  * @param {String{ grupo: La dirección o el identificador del grupo.
  */
-export function obtGrupo(grupo) {
+export function obtener(grupo) {
    grupo = patchString(grupo);
    return gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}`,
@@ -50,7 +49,7 @@ export function obtGrupo(grupo) {
    });
 }
 
-export function crearGrupo(info) {
+export function crear(info) {
    const domain = gapi.auth2.getAuthInstance().currentUser.get().getHostedDomain();
    if(info.email && !info.email.includes('@')) info.email = `${info.email}@${domain}`;
    return gapi.client.request({
@@ -61,7 +60,7 @@ export function crearGrupo(info) {
 }
 
 
-export function actualizarGrupo(id, info) {
+export function actualizar(id, info) {
    id = patchString(id);
    return gapi.client.request({
             path: `https://www.googleapis.com/admin/directory/v1/groups/${id}`,
@@ -76,7 +75,7 @@ export function actualizarGrupo(id, info) {
  *
  * @param {String} id: Identificador o dirección del grupo.
  */
-export function borrarGrupo(id) {
+export function borrar(id) {
    id = patchString(id);
    return gapi.client.request({
             path: `https://www.googleapis.com/admin/directory/v1/groups/${id}`,

@@ -1,8 +1,8 @@
 // Procesa la configuración.
 
 import {normalizar} from "../utils.js";
-import {crearGrupo, obtGrupo} from "../api/grupos.js"; 
-import {vaciarGrupo, agregarMiembro} from "../api/miembros.js"; 
+import * as Grupos from "../api/grupos.js"; 
+import * as Miembros from "../api/miembros.js"; 
 
 
 export function crearNombreUsuario(nombre) {
@@ -18,14 +18,14 @@ export function inicializar(config) {
          const res = response;
 
          const creacion = new Promise((resolve, reject) => {
-            crearGrupo(config.alumnos)
+            Grupos.crear(config.alumnos)
                .then(response => {
                   res.creacion[config.alumnos.email] = {grupo: response.result, code: response.status};
                   resolve(response.result.id);
                })
                .catch(error => {
                   res.creacion[config.alumnos.email] = {code: error.result.error.code, message: error.result.error.message};
-                  obtGrupo(config.alumnos.email)
+                  Grupos.obtener(config.alumnos.email)
                      .then(response => {
                         resolve(response.result.id);
                      })
@@ -75,7 +75,7 @@ function inicializarGrupo(grupo, miembros) {
 
       // Intenta añadir el grupo contenedor y los miembros.
       for(const m of miembros_extendido) {
-         batch.add(crearGrupo(m), {id: m.email});
+         batch.add(Grupos.crear(m), {id: m.email});
       }
 
       miembros_extendido = Object.fromEntries(miembros_extendido.map(m => [m.email, m]));
@@ -100,7 +100,7 @@ function inicializarGrupo(grupo, miembros) {
             const existentes = Object.keys(miembros_extendido);
             if(existentes.length === 0) resolve(res);
             const batch = gapi.client.newBatch();
-            existentes.forEach(m => batch.add(obtGrupo(m), {id: m}));
+            existentes.forEach(m => batch.add(Grupos.obtener(m), {id: m}));
             batch.then(response => {
                for(const [email, result] of Object.entries(response.result)) {
                   if(result.result.error) {
@@ -119,7 +119,7 @@ function inicializarGrupo(grupo, miembros) {
 
       obtencion.then(result => {
          const batch = gapi.client.newBatch();
-         miembros.forEach(m => batch.add(agregarMiembro(grupo.id, m.id), {id: m.email}));
+         miembros.forEach(m => batch.add(Miembros.agregar(grupo.id, m.id), {id: m.email}));
          batch.then(response => {
             res.insercion = [];
             for(const [email, result] of Object.entries(response.result)) {

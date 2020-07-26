@@ -1,7 +1,7 @@
 import DEFAULT_CONFIG from "./config.json";
 import * as utils from "./utils.js";
 import {inicializar} from "./init.js";
-import {obtGrupo} from "../api/grupos.js";
+import * as grupos from "../api/grupos.js";
 
 const default_config = JSON.stringify(DEFAULT_CONFIG);
 let singleton = null;
@@ -248,7 +248,7 @@ function getInfo(config, deep, res) {
 
    const batch = gapi.client.newBatch();
    for(const id in res) {
-      batch.add(obtGrupo(id), {id: id});
+      batch.add(grupos.obtener(id), {id: id});
    }
 
    return new Promise((resolve, reject) => {

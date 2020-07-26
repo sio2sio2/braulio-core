@@ -93,8 +93,7 @@ function interfaz(client) {
    document.getElementById("lu").addEventListener("click", async function(e) {
       clearPre();
       var i = 1;
-      for await (const user of client.api.obtUsuarios({limit: 60, maxResults: 30}).iter()) {
-         console.log("DEBUG", user);
+      for await (const user of client.api.usuarios.listar({limit: 60, maxResults: 30}).iter()) {
          const cuenta = user.primaryEmail.slice(0, user.primaryEmail.indexOf('@')),
                ce = client.api.isID(cuenta),
                cid = client.api.isID(user.id);
@@ -109,9 +108,9 @@ function interfaz(client) {
 
    document.getElementById("lp").addEventListener("click", function(e) {
       clearPre();
-      client.api.obtUsuarios({maxResults: 100, query: "orgUnitPath=/claustro"}).get().then(users => {
+      client.api.usuarios.listar({maxResults: 100, query: "orgUnitPath=/claustro"}).get().then(users => {
          users.forEach((user, i) => {
-            appendPre(i + '. ' + user.primaryEmail + ' (' + user.name.fullName + ')');
+            appendPre(`${i}. ${user.primaryEmail} (${user.name.fullName})`);
          });
       });
    });
@@ -119,7 +118,7 @@ function interfaz(client) {
    document.getElementById("lg").addEventListener("click", async function(e) {
       clearPre();
       var i = 1;
-      for await (const grp of client.api.obtGrupos().iter()) {
+      for await (const grp of client.api.grupos.listar().iter()) {
          const cuenta = grp.email.slice(0, grp.email.indexOf('@')),
                ce = client.api.isID(cuenta),
                cid = client.api.isID(grp.id);
@@ -135,7 +134,7 @@ function interfaz(client) {
       clearPre();
       try {
          var i = 1;
-         for await (const grp of client.api.obtGrupos({userKey: "josemiguelsanchez@iescastillodeluna.es"}).iter()) {
+         for await (const grp of client.api.grupos.listar({userKey: "josemiguelsanchez@iescastillodeluna.es"}).iter()) {
             appendPre(i + '. ' + grp.email + ' (' + grp.description + ')');
             i++;
          }
@@ -148,7 +147,7 @@ function interfaz(client) {
 
    document.getElementById("bc").addEventListener("click", async function(e) {
       clearPre();
-      client.api.obtGrupos({query: "email:BORRAR-*"}).get().then(grupos => {
+      client.api.grupos.listar({query: "email:BORRAR-*"}).get().then(grupos => {
          // Evitamos aposta eliminar un grupo.
          grupos = grupos.filter(gr => gr.name !== "Música");
 
@@ -161,7 +160,7 @@ function interfaz(client) {
 
          const batch = gapi.client.newBatch();
          for(const grupo of grupos) {
-            batch.add(client.api.borrarGrupo(grupo.email), {id: grupo.email});
+            batch.add(client.api.grupos.borrar(grupo.email), {id: grupo.email});
          }
          batch.then(response => {
             client.config.remove().then(r => {
@@ -200,7 +199,7 @@ function interfaz(client) {
       clearPre();
       try {
          var i = 1;
-         for await (const miembro of client.api.obtMiembros("borrar@iescastillodeluna.es").iter()) {
+         for await (const miembro of client.api.miembros.listar("borrar@iescastillodeluna.es").iter()) {
             appendPre(i + ". " + miembro.email + " (" + miembro.type + ")");
             i++;
          } 
@@ -213,7 +212,7 @@ function interfaz(client) {
    document.getElementById("vm").addEventListener("click", function(e) {
       const grupo = "borrar@iescastillodeluna.es";
       try {
-         client.api.vaciarGrupo(grupo).then(response => {
+         client.api.miembros.vaciar(grupo).then(response => {
             clearPre();
             var i = 1;
             for(const email in response) {

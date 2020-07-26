@@ -1,7 +1,5 @@
 // Funciones relacionadas con la membresía.
-
-import Listar from "./listar.js";
-import {patchString} from "./misc.js";
+import {patchString, listarEntidad} from "./misc.js";
 
 /**
  * Lista todos los miemnbros de un grupo.
@@ -17,7 +15,7 @@ import {patchString} from "./misc.js";
  *
  * Véanse los ejemplos de obtUsuarios.
  */
-export function obtMiembros(groupKey, args) {
+export function listar(groupKey, args) {
    groupKey = patchString(groupKey);
    args = args || {};
    const limit = args.limit;
@@ -34,7 +32,7 @@ export function obtMiembros(groupKey, args) {
       params: args
    }
 
-   return Listar(query_params, "result.members", limit);
+   return listarEntidad(query_params, "result.members", limit);
 }
 
 
@@ -44,7 +42,7 @@ export function obtMiembros(groupKey, args) {
  * @param {String} grupo: Identificador o dirección del grupo.
  * @param {String} miembro: Identificador o dirección del miembro.
  */
-export function borrarMiembro(grupo, miembro) {
+export function borrar(grupo, miembro) {
    grupo = patchString(grupo);
    miembro = patchString(miembro);
    return gapi.client.request({
@@ -60,7 +58,7 @@ export function borrarMiembro(grupo, miembro) {
  * @param {String} grupo: Identificador o dirección del grupo.
  * @param {String} miembro: Identificador o Dirección del miembro.
  */
-export function agregarMiembro(grupo, miembro) {
+export function agregar(grupo, miembro) {
    const body = { role: "MEMBER" };
 
    grupo = patchString(grupo);
@@ -86,12 +84,12 @@ export function agregarMiembro(grupo, miembro) {
  *    los miembros eliminados del grupo, y cuyas claves el resultado de esa eliminación
  *    (siempre debería ser éxito).
  */
-export async function vaciarGrupo(grupo) {
+export async function vaciar(grupo) {
    const batch = gapi.client.newBatch();
 
    grupo = patchString(grupo);
 
-   const miembros = await obtMiembros(grupo).get();
+   const miembros = await listar(grupo).get();
    for(const m of miembros) batch.add(borrar(grupo, m.email));
 
    return new Promise((resolve, reject) => {
