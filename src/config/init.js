@@ -10,13 +10,7 @@ export function crearNombreUsuario(nombre) {
 }
 
 
-// TODO: Pasarle la configuración como parámetro.
 export function inicializar(config) {
-   if(!config.claustro.email.includes('@')) config.claustro.email = `${config.claustro.email}@${hosted_domain}`;
-   if(!config.alumnos.email.includes('@')) config.alumnos.email = `${config.alumnos.email}@${hosted_domain}`;
-   for(const dpto of config.departamentos) {
-      if(!dpto.email.includes('@')) dpto.email = `${dpto.email}@${hosted_domain}`;
-   }
 
    return new Promise((resolve, reject) => {
 
@@ -44,7 +38,6 @@ export function inicializar(config) {
          creacion.then(id => {
             config.alumnos.id = id;
             this.set(config).then(response => {
-               console.log("DEBUG", response);
                resolve(res);
             });
          });

@@ -10,4 +10,9 @@ export function isID(string) {
               !string.match(/[a-z]{7}/))            //         - Hasta seis letras seguidas.
 }
 
-
+/**
+ * Añade el dominio en caso de que false.
+ */
+export function patchString(string) {
+   return (string.includes('@') || isID(string))?string:`${string}@${hosted_domain}`;
+}

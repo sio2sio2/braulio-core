@@ -1,6 +1,7 @@
 // Funciones relacionadas con la membresía.
 
 import Listar from "./listar.js";
+import {patchString} from "./misc.js";
 
 /**
  * Lista todos los miemnbros de un grupo.
@@ -17,6 +18,7 @@ import Listar from "./listar.js";
  * Véanse los ejemplos de obtUsuarios.
  */
 export function obtMiembros(groupKey, args) {
+   groupKey = patchString(groupKey);
    args = args || {};
    const limit = args.limit;
    delete args.limit;
@@ -43,6 +45,8 @@ export function obtMiembros(groupKey, args) {
  * @param {String} miembro: Identificador o dirección del miembro.
  */
 export function borrarMiembro(grupo, miembro) {
+   grupo = patchString(grupo);
+   miembro = patchString(miembro);
    return gapi.client.request({
             path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members/${miembro}`,
             method: "DELETE"
@@ -58,20 +62,18 @@ export function borrarMiembro(grupo, miembro) {
  */
 export function agregarMiembro(grupo, miembro) {
    const body = { role: "MEMBER" };
+
+   grupo = patchString(grupo);
+   miembro = patchString(miembro);
+
    if(miembro.includes('@')) body.email = miembro
    else body.id = miembro;
+
    return gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members`,
       method: "POST",
       body: body
    });
-}
-
-
-export function agregarMiembros(grupo, miembros) {
-   const batch = gapi.client.newBatch();
-   miembros.forEach(m => batch.add(agregarMiembro(grupo, m), {id: m.email}));
-   return batch;
 }
 
 
@@ -86,6 +88,8 @@ export function agregarMiembros(grupo, miembros) {
  */
 export async function vaciarGrupo(grupo) {
    const batch = gapi.client.newBatch();
+
+   grupo = patchString(grupo);
 
    const miembros = await obtMiembros(grupo).get();
    for(const m of miembros) batch.add(borrar(grupo, m.email));

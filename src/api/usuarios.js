@@ -62,6 +62,7 @@ export function obtUsuarios(args) {
 }
 
 
+// TODO: BORRAR ESTO.
 /**
  * Crea los profesores contenidos en una lista.
  *

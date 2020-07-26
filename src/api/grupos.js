@@ -1,4 +1,5 @@
 import Listar from "./listar.js";
+import {patchString} from "./misc.js";
 
 /**
  * Obtiene una lista de de grupos.
@@ -42,6 +43,7 @@ export function obtGrupos(args) {
  * @param {String{ grupo: La dirección o el identificador del grupo.
  */
 export function obtGrupo(grupo) {
+   grupo = patchString(grupo);
    return gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}`,
       method: "GET"
@@ -49,6 +51,7 @@ export function obtGrupo(grupo) {
 }
 
 export function crearGrupo(info) {
+   if(info.email && !info.email.includes('@')) info.email = `${info.email}@${hosted_domain}`;
    return gapi.client.request({
             path: "https://www.googleapis.com/admin/directory/v1/groups",
             method: "POST",
@@ -58,6 +61,7 @@ export function crearGrupo(info) {
 
 
 export function actualizarGrupo(id, info) {
+   id = patchString(id);
    return gapi.client.request({
             path: `https://www.googleapis.com/admin/directory/v1/groups/${id}`,
             method: "PUT",
@@ -72,6 +76,7 @@ export function actualizarGrupo(id, info) {
  * @param {String} id: Identificador o dirección del grupo.
  */
 export function borrarGrupo(id) {
+   id = patchString(id);
    return gapi.client.request({
             path: `https://www.googleapis.com/admin/directory/v1/groups/${id}`,
             method: "DELETE"
