@@ -1,14 +1,20 @@
 {
-   "claustro": {
-      "name": "Claustro"
-   },
-   "alumnos": {
-      "name": "Alumnos"
+   "contenedores": {
+      "claustro": {
+         "name": "Claustro"
+      },
+      "alumnos": {
+         "name": "Alumnos"
+      },
+      "tutores": {
+         "name": "Tutores",
+         "description": "Tutores de alumnos"
+      }
    },
    "departamentos": [
       {
          "name": "Filosofía",
-         "puestos": [ "~*.590001" ]
+         "puestos": [ "/[0-1][0-9]590001/" ]
       },
       {
          "name": "Clásicas",
@@ -20,23 +26,23 @@
       },
       {
          "name": "Geografía e Historia",
-         "puestos": [ "~.*590005" ]
+         "puestos": [ "/[0-1][0-9]590005/" ]
       },
       {
          "name": "Matemáticas",
-         "puestos": [ "~.*590006" ]
+         "puestos": [ "/[0-1][0-9]590006/" ]
       },
       {
          "name": "Física y Química",
-         "puestos": [ "~.*590007" ]
+         "puestos": [ "/[0-1][0-9]590007/" ]
       },
       {
          "name": "Biología y Geología",
-         "puestos": [ "~.*590008" ]
+         "puestos": [ "/[0-1][0-9]590008/" ]
       },
       {
          "name": "Dibujo",
-         "puestos": [ "~.*590009" ]
+         "puestos": [ "/[0-1][0-9]590009/" ]
       },
       {
          "name": "Francés",
@@ -48,24 +54,23 @@
       },
       {
          "name": "Música",
-         "puestos": [ "~.*590016" ]
+         "puestos": [ "/[0-1][0-9]590016/" ]
       },
       {
          "name": "Educación Física",
-         "puestos": [ "~.*590017" ]
+         "puestos": [ "/[0-1][0-9]590017/" ]
       },
       {
          "name": "Orientación",
-         "puestos": [ "00590018", "~00597.*", "00590058", "00590059" ]
+         "puestos": [ "00590018", "/00597[0-9]{3}/", "00590058", "00590059" ]
       },
       {
          "name": "Tecnología",
-         "puestos": [ "~.*590019" ]
+         "puestos": [ "/[0-1][0-9]590019/" ]
       },
       {
          "name": "Economía",
-         "puestos": [ "~.*590061", "~.*590105" ]
+         "puestos": [ "/[0-1][0-9]590061/", "/[0-1][0-9]590105/" ]
       }
-   ],
-   "grupos": []
+   ]
 }

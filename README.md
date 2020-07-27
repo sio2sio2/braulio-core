@@ -289,4 +289,48 @@ cliente.addEventListener("signedin", function(e) {
 
 ### Configuración
 
+La aplicación necesita almacenar información adicional referente a:
+
+- el grupo que representará al claustro y contendrá todos los departamentos
+  didácticos.
+- el grupo que representará a los alumnos y contendrá todos los grupos de
+  clase.
+- el grupo que incluya a todos los tutores.
+- los puestos adcritos a los distintos departamentos didácticos.
+  Por ejemplo, es necesario conocer que el profesor con puesto
+  *10590006* pertenece al departamento de Matemáticas.
+
+Para ello usa un fichero en formato JSON que se almacena en el directorio para
+datos de aplicaciones del [Drive](https://drive.google.com) del usuario
+administrador y que tiene esta estructura:
+
+~~~json
+
+{
+   "contenedores": {
+      "claustro": { "id": "### identificador del grupo ###" },
+      "alumnos": {"id": "### identificador del grupo ###" },
+      "tutores": {"id": "### identificador del grupo ###" },
+   },
+   "ou": {
+      "claustro": "/claustro",
+      "alumnos": "/alumnos",
+      "otros": "/misc"
+   }
+   "departamentos": [
+      { 
+         "id": "### Identificador del grupo de Filosofía ###",
+         "puestos": [ "/[0-1][0-9]590001/" ]
+      },
+      {
+         "id": "### Identificador del grupo de Lenguas Clásicas ###",
+         "puestos": [ "00590002" , "00590003" ]
+      }
+   ]
+}
+
+~~~
+
+
+
 ### Manipulación de G-Suite

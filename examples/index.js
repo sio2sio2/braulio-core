@@ -14,10 +14,12 @@ function clearPre() {
 // quitando espacios y caracteres no ingleses.
 function generarConfiguracion(client) {
    const utils = client.config.utils,
-         config = client.config.seed;
+         config = client.config.seed,
+         cont = config.contenedores;
 
-   config.claustro.email = config.claustro.email || utils.generarCuentaDepartamento(config.claustro.name);
-   config.alumnos.email = config.alumnos.email || utils.generarCuentaDepartamento(config.alumnos.name);
+   cont.claustro.email = cont.claustro.email || utils.generarCuentaDepartamento(cont.claustro.name);
+   cont.alumnos.email = cont.alumnos.email || utils.generarCuentaDepartamento(cont.alumnos.name);
+   cont.tutores.email = cont.tutores.email || utils.generarCuentaDepartamento(cont.tutores.name);
    config.departamentos.forEach(dpto => {
       dpto.email = dpto.email || utils.generarCuentaDepartamento(dpto.name);
       dpto.description = `Departamento de ${dpto.name}`;
@@ -52,8 +54,9 @@ function interfaz(client) {
       // Añadimos el prefijo "BORRAR-" a todos los grupos
       // para no interferir con los ya creados en el dominio.
       {
-         config.claustro.email = `BORRAR-${config.claustro.email}`
-         config.alumnos.email = `BORRAR-${config.alumnos.email}`
+         config.contenedores.claustro.email = `BORRAR-${config.contenedores.claustro.email}`
+         config.contenedores.alumnos.email = `BORRAR-${config.contenedores.alumnos.email}`
+         config.contenedores.tutores.email = `BORRAR-${config.contenedores.tutores.email}`
          config.departamentos = config.departamentos.map(dpto => Object.assign(dpto, {email: `BORRAR-${dpto.email}`}));
          config.grupos = config.grupos.map(gr => Object.assign(gr, {email: `BORRAR-${gr.email}`}));
       }
@@ -149,7 +152,7 @@ function interfaz(client) {
       clearPre();
       client.api.grupos.listar({query: "email:BORRAR-*"}).get().then(grupos => {
          // Evitamos aposta eliminar un grupo.
-         grupos = grupos.filter(gr => gr.name !== "Música");
+         grupos = grupos.filter(gr => gr.name !== "Música" && gr.name !== "Tutores");
 
          if(grupos.length === 0) {
             client.config.remove().then(r => {

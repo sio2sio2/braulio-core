@@ -84,21 +84,22 @@ export function agregar(grupo, miembro) {
  *    los miembros eliminados del grupo, y cuyas claves el resultado de esa eliminación
  *    (siempre debería ser éxito).
  */
-export async function vaciar(grupo) {
-   const batch = gapi.client.newBatch();
-
-   grupo = patchString(grupo);
-
-   const miembros = await listar(grupo).get();
-   for(const m of miembros) batch.add(borrar(grupo, m.email));
-
+export function vaciar(grupo) {
    return new Promise((resolve, reject) => {
-      if(miembros.length) {
-         batch.then(response => {
-            resolve(Object.fromEntries(Object.entries(response.result)
-               .map(([email, value]) => [email, value.result && value.result.error || {code: value.status, message: "OK"}])));
-         }).catch(error => reject(error.result.error)); 
-      }
-      else resolve({});
+      grupo = patchString(grupo);
+
+      listar(grupo).get(),then(miembros => {
+         const batch = gapi.client.newBatch();
+
+         for(const m of miembros) batch.add(borrar(grupo, m.email));
+
+            if(miembros.length) {
+               batch.then(response => {
+                  resolve(Object.fromEntries(Object.entries(response.result)
+                     .map(([email, value]) => [email, value.result && value.result.error || {code: value.status, message: "OK"}])));
+               }).catch(error => reject(error.result.error)); 
+            }
+            else resolve({});
+      });
    });
 }
