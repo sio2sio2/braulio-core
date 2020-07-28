@@ -10,6 +10,7 @@ export function testGroupsRequest(grupo) {
 import * as usuarios from "./usuarios.js";
 import * as grupos from "./grupos.js";
 import * as miembros from "./miembros.js";
+import * as ou from "./ou.js";
 import {isID} from "./misc.js";
 
-export {usuarios, grupos, miembros, isID};
+export {usuarios, grupos, miembros, ou, isID};

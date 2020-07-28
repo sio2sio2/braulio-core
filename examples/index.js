@@ -24,7 +24,6 @@ function generarConfiguracion(client) {
       dpto.email = dpto.email || utils.generarCuentaDepartamento(dpto.name);
       dpto.description = `Departamento de ${dpto.name}`;
    });
-   config.grupos.forEach(gr => gr.email = gr.email || utils.generarCuentaGrupo(gr.name, true));
 
    return config;
 }
@@ -36,7 +35,7 @@ function interfaz(client) {
          client[e.target.textContent === "Entrar"?"signin":"signout"](e);
       });
 
-      window.CONFIG = client.config;
+      window.CLIENTE = client;
    });
 
    client.addEventListener("failed", function(e) {
@@ -57,8 +56,10 @@ function interfaz(client) {
          config.contenedores.claustro.email = `BORRAR-${config.contenedores.claustro.email}`
          config.contenedores.alumnos.email = `BORRAR-${config.contenedores.alumnos.email}`
          config.contenedores.tutores.email = `BORRAR-${config.contenedores.tutores.email}`
+         config.ou.claustro.name = `BORRAR-${config.ou.claustro.name}`
+         config.ou.alumnos.name = `BORRAR-${config.ou.alumnos.name}`
+         config.ou.misc.name = `BORRAR-${config.ou.misc.name}`
          config.departamentos = config.departamentos.map(dpto => Object.assign(dpto, {email: `BORRAR-${dpto.email}`}));
-         config.grupos = config.grupos.map(gr => Object.assign(gr, {email: `BORRAR-${gr.email}`}));
       }
 
       appendPre("NO HAY CONFIGURACIÖN: Debe forzarse al usuario a definir una.\n" +
@@ -148,9 +149,9 @@ function interfaz(client) {
    });
 
 
-   document.getElementById("bc").addEventListener("click", async function(e) {
+   document.getElementById("bc").addEventListener("click", function(e) {
       clearPre();
-      client.api.grupos.listar({query: "email:BORRAR-*"}).get().then(grupos => {
+      client.api.grupos.listar({query: "email:BORRAR-*"}).get().then(async grupos => {
          // Evitamos aposta eliminar un grupo.
          grupos = grupos.filter(gr => gr.name !== "Música" && gr.name !== "Tutores");
 
@@ -165,6 +166,12 @@ function interfaz(client) {
          for(const grupo of grupos) {
             batch.add(client.api.grupos.borrar(grupo.email), {id: grupo.email});
          }
+
+         const config = await client.config.get();
+         for(const ou of Object.values(config.ou)) {
+            batch.add(client.api.ou.borrar(ou.orgUnitId), {id: ou.orgUnitPath});
+         }
+
          batch.then(response => {
             client.config.remove().then(r => {
                appendPre("Borrada la configuración y los grupos:");

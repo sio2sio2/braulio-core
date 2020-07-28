@@ -313,10 +313,10 @@ administrador y que tiene esta estructura:
       "tutores": {"id": "### identificador del grupo ###" },
    },
    "ou": {
-      "claustro": "/claustro",
-      "alumnos": "/alumnos",
-      "otros": "/misc"
-   }
+      "claustro": { "orgUnitId": "### identificador de la ou ###" },
+      "alumnos": { "orgUnitId": "### identificador de la ou ###" },
+      "misc": { "orgUnitId": "### identificador de la ou ###" }
+   },
    "departamentos": [
       { 
          "id": "### Identificador del grupo de Filosofía ###",
@@ -331,6 +331,72 @@ administrador y que tiene esta estructura:
 
 ~~~
 
+El fichero almacena identificadores para evitar que una manipulación manual de
+alguno de los nomres de grupo inutilice la aplicación. Al completarse la
+autenticación, ``Braulio`` intenta cargar el fichero de configuración:
 
+- Si lo encuentra, hará consultas para obtener los nombres, direcciones y
+  descripciones, de los grupos y la ruta de las unidades organizativas a partir
+  de los identificadores almacenados.
+- Si no lo encuentra, disparará el evento *noconfig* para que pueda crearse
+  una configuración inicial:
 
-### Manipulación de G-Suite
+  ~~~javascript
+
+  cliente.addEventListener("noconfig", function(e) {
+      // El objeto de configuración facilita una propuesta inicial
+      // que se puede tomar como base para crear la configuración.
+      const config = cliente.config.seed;
+
+      // Manipulación de config como se estime oportuno. Lo mínimo
+      // indispensable es definir los correos electrónicos de 
+
+      const cont = config.contenedores,
+            utils = cliente.config.utils;;
+
+      // En la semilla inicial falta definir los correos
+      // electrónicos de los grupos (y, si se desean definir, las descripciones)
+
+      cont.claustro.email = utils.generarCuentaDepartamento(cont.claustro.name);
+      cont.alumnos.email = utils.generarCuentaDepartamento(cont.alumnos.name);
+      cont.tutores.email = utils.generarCuentaDepartamento(cont.tutores.name);
+      config.departamentos.forEach(dpto => {
+         dpto.email = utils.generarCuentaDepartamento(dpto.name);
+         dpto.description = `Departamento de ${dpto.name}`;
+      });
+
+      // Al acabar de manipular, se inicializa el objeto a fin de almacenar
+      // el fichero:
+      client.config.inicializar(config).then(response => {
+         console.log("Inicialización completa de la configuración");
+      });
+  });
+
+  ~~~
+
+El objeto de configuración es accesible a través atributo ``cliente.config`` y
+dispone:
+
+**Métodos**
+
+* ``.get()``: Promesa del contenido del fichero:
+
+  ~~~javascript
+
+  cliente.config.get().then(content => {
+      console.log("El contenido de la configuración es", content);
+  });
+
+  ~~~
+
+*
+
+**Atributos**
+
+**Eventos**
+
+| Evento    | Se desencadena cuando...                                   |
+| --------- | ---------------------------------------------------------- |
+| noconfig  | ... se detecta que no existe configuración al autenticarse |
+
+### API de manipulación de G-Suite

@@ -11,6 +11,17 @@
          "description": "Tutores de alumnos"
       }
    },
+   "ou": {
+      "claustro": {
+         "name": "claustro"
+      },
+      "alumnos": {
+         "name": "alumnos"
+      },
+      "misc": {
+         "name": "misc"
+      }
+   },
    "departamentos": [
       {
          "name": "Filosofía",

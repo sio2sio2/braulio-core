@@ -2,6 +2,7 @@ import DEFAULT_CONFIG from "./config.json";
 import * as utils from "./utils.js";
 import {inicializar} from "./init.js";
 import * as grupos from "../api/grupos.js";
+import * as ou from "../api/ou.js";
 
 const default_config = JSON.stringify(DEFAULT_CONFIG);
 let singleton = null;
@@ -149,7 +150,7 @@ Config.prototype.set = function(content) {
             gapi.client.request({
                path: "https://www.googleapis.com/upload/drive/v3/files/" + await this.id,
                method: "PATCH",
-               body: JSON.stringify(mrproper(content)),
+               body: JSON.stringify(mrproper(JSON.parse(JSON.stringify(content)))),
             }).then(response => {
                   this._content = content;
                   resolve(response);
@@ -209,7 +210,12 @@ function mrproper(config) {
       delete config.description;
       delete config.name;
    }
+   if(config.name && config.orgUnitId) {
+      delete config.orgUnitPath;
+      delete config.name;
+   }
    for(const attr in config) {
+      if(!config[attr]) continue;
       switch(config[attr].constructor) {
          case Object:
             mrproper(config[attr]);
@@ -222,6 +228,7 @@ function mrproper(config) {
    return config;
 }
 
+
 /**
  * Añade a la configuración email, descripción y nombre.
  * (Útil tras cargarla desde el Drive).
@@ -230,8 +237,8 @@ function getInfo(config, deep, res) {
    deep = deep || 0;
    res = res || {};
 
-   if(config.id) {
-      res[config.id] = config;
+   if(config.id || config.orgUnitId) {
+      res[config.id || config.orgUnitId] = config;
    }
    for(const attr in config) {
       switch(config[attr].constructor) {
@@ -248,7 +255,8 @@ function getInfo(config, deep, res) {
 
    const batch = gapi.client.newBatch();
    for(const id in res) {
-      batch.add(grupos.obtener(id), {id: id});
+      if(res[id].id) batch.add(grupos.obtener(id), {id: id});
+      else batch.add(ou.obtener(id), {id: id});
    }
 
    return new Promise((resolve, reject) => {
@@ -259,6 +267,7 @@ function getInfo(config, deep, res) {
             if(result.email) res[id].email = result.email;
             if(result.name) res[id].name = result.name;
             if(result.description) res[id].description = result.description;
+            if(result.orgUnitPath) res[id].orgUnitPath = result.orgUnitPath;
          }
          resolve(config);
       }).catch(error => {

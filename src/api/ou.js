@@ -2,14 +2,39 @@
 // El programa no da opción de cambiarlas, así que la API
 // sólo incluye la forma de crearlas durante la inicialización.
 
-export function crear(name, description) {
+export function crear(info) {
+   const body = Object.assign({parentOrgUnitPath: "/", description: info.name}, info);
+   info.orgUnitPath = `/${info.name}`;
    return gapi.client.request({
       path: "https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits",
       method: "POST",
-      body: {
-         name: name,
-         parentOrgUnitPath: "/",
-         description: desciption || name
-      }
+      body: body
+   });
+}
+
+export function listar() {
+   return gapi.client.request({
+      path: "https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits",
+      method: "GET",
+      params: { orgUnitPath: "/" }
+   });
+}
+
+export function obtener(ou) {
+   return gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits/${ou}`,
+      method: "GET",
+   });
+}
+
+/**
+ * Borra una unidad de organización.
+ *
+ * @param {String} ou: Path o ID de la unidad.
+ */
+export function borrar(ou) {
+   return gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits/${ou}`,
+      method: "DELETE"
    });
 }

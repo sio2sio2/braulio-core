@@ -3,9 +3,10 @@
 import {normalizar} from "../utils.js";
 import * as Grupos from "../api/grupos.js"; 
 import * as Miembros from "../api/miembros.js"; 
+import * as Ou from "../api/ou.js"; 
 
 
-// Simplifica los resultados de unj proceso batch.
+// Simplifica los resultados de un proceso batch.
 function getBatchResult(result) {
    return Object.fromEntries
             (Object.entries(result).map(
@@ -23,7 +24,10 @@ export function inicializar(config) {
       crearObtener(Object.values(config.contenedores), true).then(creacion => {
          poblar(config.contenedores.claustro, config.departamentos).then(response => {
             Object.assign(response.creacion, creacion);
-            this.set(config).then(response => resolve(response));
+            crearOus(config.ou).then(r => {
+               response.ou = r;
+               this.set(config).then(response => resolve(response));
+            });
          });
       });
    });
@@ -148,6 +152,42 @@ function poblar(grupo, miembros) {
          }).catch(error => {
             res.insercion = [];
             resolve(res);
+         });
+      });
+   });
+}
+
+function crearOus(ous) {
+   if(Object.keys(ous).length === 0) return Promise.resolve({result: null});
+
+   const batch = gapi.client.newBatch();
+
+   for(const ou of Object.values(ous)) {
+      batch.add(Ou.crear(ou), {id: ou.name});
+   }
+
+   const creacion = new Promise(resolve => {
+      batch
+         .then(response => {
+            resolve(getBatchResult(response.result));
+         })
+         .catch(error => resolve(Object.fromEntries(
+                              Object.keys(ous).map(name => [name, {code: 409, message: "Entity already exists."}]))));
+   });
+
+   return new Promise((resolve, reject) => {
+      creacion.then(result => {
+         Ou.listar().then(response => {
+            const result = Object.fromEntries(response.result.organizationUnits.map(ou => [ou.name, ou]));
+            for(const ou of Object.values(ous)) {
+               const id = result[ou.name].orgUnitId;
+               if(id === undefined) {
+                  reject("Imposible obtener el identificador de la unidad organizativa ''");
+                  return;
+               }
+               ou.orgUnitId = id;
+            }
+            resolve(result);
          });
       });
    });
