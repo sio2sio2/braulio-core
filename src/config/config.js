@@ -1,5 +1,4 @@
 import DEFAULT_CONFIG from "./config.json";
-import * as utils from "./utils.js";
 import {inicializar} from "./init.js";
 import * as grupos from "../api/grupos.js";
 import * as ou from "../api/ou.js";
@@ -58,8 +57,7 @@ Object.defineProperties(Config.prototype, {
          else if(Object.keys(this.content).length === 0) return "NOCONFIG";
          else return "READY";
       }
-   },
-   utils: { value: utils }
+   }
 });
 
 

@@ -303,21 +303,21 @@ La inicialización podemos dividirla en tres tareas:
 
   <a name="eventos"></a>
 
-  | Evento    | Se dispara cuando....        |
-  | --------- | ---------------------------- |
-  | succeed   | se inicializó con éxito.     |
-  | failed    | error en la inicialización.  |
-  | signedin  | se produjo la autenticación. |
-  | noconfig  | no hay configuración previa. |
-  | onready   | estamos listos para empezar, |
+  | Evento       | Se dispara cuando....        |
+  | ------------ | ---------------------------- |
+  | ``succeed``  | se inicializó con éxito.     |
+  | ``failed``   | error en la inicialización.  |
+  | ``signedin`` | se produjo la autenticación. |
+  | ``noconfig`` | no hay configuración previa. |
+  | ``onready``  | estamos listos para empezar, |
 
   Existen, además, otros eventos no relacionados con la inicialización:
 
-  | Evento      | Se dispara cuando....                  |
-  | ----------- | -------------------------------------- |
-  | signedout   | se ha completado desautenticación.     |
-  | savedconfig | se ha guardado la configuración,       |
-  | onreset     | nos desvinculamos de la configuración. |
+  | Evento          | Se dispara cuando....                  |
+  | --------------- | -------------------------------------- |
+  | ``signedout``   | se ha completado desautenticación.     |
+  | ``savedconfig`` | se ha guardado la configuración,       |
+  | ``onreset``     | nos desvinculamos de la configuración. |
 
   ![Eventos del mayordomo](images/eventos.png)
 
@@ -333,10 +333,10 @@ La inicialización podemos dividirla en tres tareas:
 
 La autenticación tiene asociados dos métodos:
 
-| Método    | Descripción                          |
-| --------- | ------------------------------------ |
-| signin()  | Arranca el proceso de autenticación. |
-| signout() | Desconecta la aplicación,            |
+| Método        | Descripción                          |
+| ------------- | ------------------------------------ |
+| ``signin()``  | Arranca el proceso de autenticación. |
+| ``signout()`` | Desconecta la aplicación,            |
 
 Por ello, en el ejemplo de código propuesto en la guía rápida, asociamos estos
 dos métodos al botón que designamos para entrar y salir de la aplicación:
@@ -352,10 +352,10 @@ ingresar.addEventListener("click", e => {
 
 Para cuando se completa el ingreso o la salida, hay dos eventos:
 
-| Evento    | Se desencadena cuando...              |
-| --------- | ------------------------------------- |
-| signedin  | ... el usuario abre una sesión.       |
-| signedout | ... el usuario sale de la sesión.     |
+| Evento        | Se desencadena cuando...              |
+| ------------- | ------------------------------------- |
+| ``signedin``  | ... el usuario abre una sesión.       |
+| ``signedout`` | ... el usuario sale de la sesión.     |
 
 Es importante significar que completar con éxito la autenticación, no significa
 que estemos en disposición de gestionar G-Suite, ya que la aplicación necesita
@@ -393,16 +393,16 @@ Un ejemplo de uso, lo tenemos recogido en el [código inicial](#ejemplo):
 
 Para todos los tipos de eventos el objeto ``e`` disponible en las funciones disparadas incluye:
 
-| Atributo | Descripción                                              |
-| -------- | -------------------------------------------------------- |
-| type     | Tipo de evento disparado (*signedin*, *failed*, etc).    |
-| target   | El propio objeto mayordomo.                              |
+| Atributo    | Descripción                                              |
+| ----------- | -------------------------------------------------------- |
+| ``type``    | Tipo de evento disparado (*signedin*, *failed*, etc).    |
+| ``target``  | El propio objeto mayordomo.                              |
 
 En algunos tipos, puede presentar algún atributo más. El evento *onready* añade:
 
-| Atributo  | Descripción                                                                       |
-| --------- | --------------------------------------------------------------------------------- |
-| action    | Indica si se desencadena al recuperar (*get*) o generar (*set*) la configuración. |
+| Atributo    | Descripción                                                                       |
+| ----------- | --------------------------------------------------------------------------------- |
+| ``action``  | Indica si se desencadena al recuperar (*get*) o generar (*set*) la configuración. |
 
 En el caso de ``.fire()``, si se le proporciona como argumento un objeto
 adicional, los atributos de éste se añaden a los del objeto evento disponible
@@ -492,22 +492,27 @@ alguno de los nombres de grupo inutilice la aplicación. Al completarse con
 Por otra parte, el mayordomo dispone del atributo ``config`` que es un objeto
 con algunos atributos y métodos útiles:
 
-| Atributos               | Descripción                                 |
-| ----------------------- | ------------------------------------------- |
-| ``config.content``      | Objeto con la configuración.                |
-| ``config.id``           | Identificador del fichero de configuración. |
-| ``config.set(content)`` | Guarda la nueva configuración.              |
-| ``config.remove()``     | Elimina la configuración.                   |
+| Atributos               | Descripción                                          |
+| ----------------------- | ---------------------------------------------------- |
+| ``config.content``      | Objeto con la configuración.                         |
+| ``config.id``           | Identificador del fichero de configuración.          |
+| ``config.status``       | Devuelve el esto: *READY*, *UNAVAILABLE*, *NOCONFIG* |
+| ``config.set(content)`` | Guarda la nueva configuración.                       |
+| ``config.remove()``     | Elimina la configuración.                            |
 
-Es importante tener presente dos cosas:
+Es importante tener presente tres cosas:
 
 1. El objeto que debe pasarse a ``config.set()`` se usará tal cual para dar valor
    a ``config.content`` y, convenientemente depurado, para guardarse en el *Drive*.
    La depuración consistirá en eliminar nombres y descripciones y dejar sólo los
    identificadores.
 
-2. ``config.remove()`` elimina exclusivamente el fichero de configuración, pero
+1. ``config.remove()`` elimina exclusivamente el fichero de configuración, pero
    no los grupos o las unidades organizativas declaradas en tal fichero. SI se
    desea eliminar esa estructura habrá de llevarse acabo de forma independiente.
+
+1. Una configuración completa tendrá estado *READY*; una configuración sin
+   inicializar, estado *UNAVAILABLE*; y una configuraciónh pendiente de
+   generarse por primera vez *NOCONFIG:
 
 ### API de manipulación de G-Suite

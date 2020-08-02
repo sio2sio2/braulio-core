@@ -24,7 +24,7 @@ function interfaz(client) {
    // se desencadena el evento "noconfig" que proporciona
    // un objeto e.seed con una preconfiguración.
    client.on("noconfig", function(e) {
-      generarConfiguracion(e.seed, client.config.utils.generarCuentaDepartamento);
+      generarConfiguracion(e.seed, client.utils.generarCuentaDepartamento);
 
 
       // Añadimos el prefijo "BORRAR-" a todos los grupos
@@ -121,7 +121,7 @@ function interfaz(client) {
 
    document.getElementById("bc").addEventListener("click", function(e) {
       clearPre();
-      client.api.grupos.listar({query: "email:BORRAR-*"}).get().then(async grupos => {
+      client.api.grupos.listar({query: "email:BORRAR-*"}).get().then(grupos => {
          // Evitamos aposta eliminar un grupo.
          grupos = grupos.filter(gr => gr.name !== "Música" && gr.name !== "Tutores");
 
@@ -137,7 +137,7 @@ function interfaz(client) {
             batch.add(client.api.grupos.borrar(grupo.email), {id: grupo.email});
          }
 
-         const config = await client.config.get();
+         const config = client.config.content;
          for(const ou of Object.values(config.ou)) {
             batch.add(client.api.ou.borrar(ou.orgUnitId), {id: ou.orgUnitPath});
          }

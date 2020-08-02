@@ -1,6 +1,7 @@
 import OAuthClient from "./auth.js";
 import * as api from "./api";
 import Config from "./config";
+import * as utils from "./utils.js";
 
 function crearCliente(name, params) {
    const cliente = new OAuthClient(Object.assign(params, {
@@ -18,6 +19,7 @@ function crearCliente(name, params) {
    cliente.on("signedout", e => config.reset());
 
    cliente.api = api;  // API de comunicación con G-Suite.
+   cliente.utils = utils;
 
    return cliente;
 }
