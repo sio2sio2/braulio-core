@@ -182,6 +182,8 @@ Recuerde que en el código HTML deberá incluir la carga de ``gapi``:
 
 ~~~
 
+<a name="ejemplo"></a>
+
 ## Inicialización (guía rápida)
 
 ~~~javascript 
@@ -265,7 +267,7 @@ window.onload = function(e) {
 ~~~
 
 Échele un ojo al [ejemplo de
-usuo](https://github.com/sio2sio2/braulio-core/tree/master/examples).
+uso](https://github.com/sio2sio2/braulio-core/tree/master/examples).
 
 ## API
 
@@ -299,6 +301,8 @@ La inicialización podemos dividirla en tres tareas:
   la carga de la autenticación, etc. Para ello es necesario asignar acciones
   a los distintos eventos:
 
+  <a name="eventos"></a>
+
   | Evento    | Se dispara cuando....        |
   | --------- | ---------------------------- |
   | succeed   | se inicializó con éxito.     |
@@ -329,10 +333,10 @@ La inicialización podemos dividirla en tres tareas:
 
 La autenticación tiene asociados dos métodos:
 
-| Método  | Descripción                          |
-| ------- | ------------------------------------ |
-| signin  | Arranca el proceso de autenticación. |
-| signout | Desconecta la aplicación,            |
+| Método    | Descripción                          |
+| --------- | ------------------------------------ |
+| signin()  | Arranca el proceso de autenticación. |
+| signout() | Desconecta la aplicación,            |
 
 Por ello, en el ejemplo de código propuesto en la guía rápida, asociamos estos
 dos métodos al botón que designamos para entrar y salir de la aplicación:
@@ -362,7 +366,47 @@ el usuario interactúe plenamente con ella.
 
 #### Eventos
 
-SEGUIR POR AQUÍ.
+Ya se han enumerado [todos los eventos reconocibles](#eventos) y cuándo se
+disparan. Es, sin embargo, pertinente profundizar en ellos.
+
+Hay varios métodos relacionados con la manipulación de eventos:
+
+| Evento                 | Descripción                                              |
+| ---------------------  | -------------------------------------------------------- |
+| ``on(nombre, func)``   | Registra la función en el evento *nombre*.               | 
+| ``once(nombre, func)`` | Registra la función para ejecutarse una sola vez.        |
+| ``off(nombre, func)``  | Cancela el registro de la función del evento *nombre*.   |
+| ``off(nombre)``        | Cancela todas las acciones asociadas al evento *nombre*. |
+| ``fire(nombre, obj)``  | Dispara las funciones del evento *nombre*.               |
+
+Un ejemplo de uso, lo tenemos recogido en el [código inicial](#ejemplo):
+
+~~~javascript
+
+   // Se ha cargado ya la configuración
+   mayordomo.on("onready", functioN(e) {
+      if(e.action === "set") console.log("Configuración generada y cargada");
+      else console.log("Configuración cargada");
+   }):
+
+~~~
+
+Para todos los tipos de eventos el objeto ``e`` disponible en las funciones disparadas incluye:
+
+| Atributo | Descripción                                              |
+| -------- | -------------------------------------------------------- |
+| type     | Tipo de evento disparado (*signedin*, *failed*, etc).    |
+| target   | El propio objeto mayordomo.                              |
+
+En algunos tipos, puede presentar algún atributo más. El evento *onready* añade:
+
+| Atributo  | Descripción                                                                       |
+| --------- | --------------------------------------------------------------------------------- |
+| action    | Indica si se desencadena al recuperar (*get*) o generar (*set*) la configuración. |
+
+En el caso de ``.fire()``, si se le proporciona como argumento un objeto
+adicional, los atributos de éste se añaden a los del objeto evento disponible
+en las funciones disparadas.
 
 ### Configuración
 
@@ -409,71 +453,61 @@ administrador y que tiene esta estructura:
 ~~~
 
 El fichero almacena identificadores para evitar que una manipulación manual de
-alguno de los nomres de grupo inutilice la aplicación. Al completarse la
-autenticación, ``Braulio`` intenta cargar el fichero de configuración:
+alguno de los nombres de grupo inutilice la aplicación. Al completarse con
+éxito la autenticación, se intenta cargar el fichero de configuración:
 
 - Si lo encuentra, hará consultas para obtener los nombres, direcciones y
   descripciones, de los grupos y la ruta de las unidades organizativas a partir
-  de los identificadores almacenados.
+  de los identificadores almacenados. Una vez completada esta tarea se
+  disparará el evento *fire*.
 - Si no lo encuentra, disparará el evento *noconfig* para que pueda crearse
-  una configuración inicial:
+  una configuración inicial, que añade un atributo *seed* con una preconfiguración:
 
   ~~~javascript
 
-  cliente.addEventListener("noconfig", function(e) {
-      // El objeto de configuración facilita una propuesta inicial
-      // que se puede tomar como base para crear la configuración.
-      const config = cliente.config.seed;
+  mayordomo.on("noconfig", function(e) {
+     // El evento proporciona una preconfiguración que muy probablemente
+     // será necesaria  completar interactivamente por el usuario.
+     const config = e.seed;
 
-      // Manipulación de config como se estime oportuno. Lo mínimo
-      // indispensable es definir los correos electrónicos de 
+     // Manipulamos la semilla para que añada todo lo necesario.
 
-      const cont = config.contenedores,
-            utils = cliente.config.utils;;
-
-      // En la semilla inicial falta definir los correos
-      // electrónicos de los grupos (y, si se desean definir, las descripciones)
-
-      cont.claustro.email = utils.generarCuentaDepartamento(cont.claustro.name);
-      cont.alumnos.email = utils.generarCuentaDepartamento(cont.alumnos.name);
-      cont.tutores.email = utils.generarCuentaDepartamento(cont.tutores.name);
-      config.departamentos.forEach(dpto => {
-         dpto.email = utils.generarCuentaDepartamento(dpto.name);
-         dpto.description = `Departamento de ${dpto.name}`;
-      });
-
-      // Al acabar de manipular, se inicializa el objeto a fin de almacenar
-      // el fichero:
-      client.config.inicializar(config).then(response => {
-         console.log("Inicialización completa de la configuración");
-      });
+     // iCUando se haya completado de manipular, guardamos la configuración,
+     // al término de lo cual se desencadenará el evento onready.
+     config.set();
   });
 
   ~~~
 
-El objeto de configuración es accesible a través atributo ``cliente.config`` y
-dispone:
+  Esta preconfiguración tiene la estructura del JSON mostrado, pero no incluye
+  identificadores, sino únicamente nombres (atributo *name*) para los usuarios,
+  grupos y unidades organizativas. Por ello, debemos manipular el objeto para
+  que añada al menos las direcciones de correo electrónico, y agregue
+  departamentos adicionales. Completda esta tarea, debemos usar el método
+  ``.set()`` de la propia semilla que guardará el contenido y lanzará el evento
+  *onready* para anunciarnos que el uso de la aplicación está listo. El método,
+  además, creará los grupos y unidades organizativas declarados que aún no
+  existan.
 
-**Métodos**
+Por otra parte, el mayordomo dispone del atributo ``config`` que es un objeto
+con algunos atributos y métodos útiles:
 
-* ``.get()``: Promesa del contenido del fichero:
+| Atributos               | Descripción                                 |
+| ----------------------- | ------------------------------------------- |
+| ``config.content``      | Objeto con la configuración.                |
+| ``config.id``           | Identificador del fichero de configuración. |
+| ``config.set(content)`` | Guarda la nueva configuración.              |
+| ``config.remove()``     | Elimina la configuración.                   |
 
-  ~~~javascript
+Es importante tener presente dos cosas:
 
-  cliente.config.get().then(content => {
-      console.log("El contenido de la configuración es", content);
-  });
+1. El objeto que debe pasarse a ``config.set()`` se usará tal cual para dar valor
+   a ``config.content`` y, convenientemente depurado, para guardarse en el *Drive*.
+   La depuración consistirá en eliminar nombres y descripciones y dejar sólo los
+   identificadores.
 
-  ~~~
-
-*
-
-**Atributos**
-
-**Eventos**
-
-| Evento    | Se desencadena cuando...                                   |
-| --------- | ---------------------------------------------------------- |
-| noconfig  | ... se detecta que no existe configuración al autenticarse |
+2. ``config.remove()`` elimina exclusivamente el fichero de configuración, pero
+   no los grupos o las unidades organizativas declaradas en tal fichero. SI se
+   desea eliminar esa estructura habrá de llevarse acabo de forma independiente.
 
 ### API de manipulación de G-Suite
