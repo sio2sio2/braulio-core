@@ -1,36 +1,5 @@
-function appendPre(message) {
-  var pre = document.getElementById('content');
-  pre.appendChild(document.createTextNode(message + '\n'));
-}
-
-function clearPre() {
-  var pre = document.getElementById('content');
-   pre.innerHTML = "";
-}
-
-
-// Convierte la configuración precargada en apta.
-// Para ello, obtiene la dirección de email a partir del nombre
-// quitando espacios y caracteres no ingleses.
-function generarConfiguracion(client) {
-   const utils = client.config.utils,
-         config = client.config.seed,
-         cont = config.contenedores;
-
-   cont.claustro.email = cont.claustro.email || utils.generarCuentaDepartamento(cont.claustro.name);
-   cont.alumnos.email = cont.alumnos.email || utils.generarCuentaDepartamento(cont.alumnos.name);
-   cont.tutores.email = cont.tutores.email || utils.generarCuentaDepartamento(cont.tutores.name);
-   config.departamentos.forEach(dpto => {
-      dpto.email = dpto.email || utils.generarCuentaDepartamento(dpto.name);
-      dpto.description = `Departamento de ${dpto.name}`;
-   });
-
-   return config;
-}
-
-
 function interfaz(client) {
-   client.addEventListener("succeed", function(e) {
+   client.on("succeed", function(e) {
       document.getElementById("authorize").addEventListener("click", e => {
          client[e.target.textContent === "Entrar"?"signin":"signout"](e);
       });
@@ -38,53 +7,54 @@ function interfaz(client) {
       window.CLIENTE = client;
    });
 
-   client.addEventListener("failed", function(e) {
+   client.on("failed", function(e) {
       appendPre(JSON.stringify(e.error, null, 2));
    });
 
-   // Cuando no se detecta configuración previa,
-   // es necesario generar una a partir de la semilla.
-   // Debe ser un proceso interactivo: aquí hacemos
-   // una autogeneración con generarConfiguración.
-   client.addEventListener("noconfig", function(e) {
-      const config = generarConfiguracion(client);
-
-
-      // Añadimos el prefijo "BORRAR-" a todos los grupos
-      // para no interferir con los ya creados en el dominio.
-      {
-         config.contenedores.claustro.email = `BORRAR-${config.contenedores.claustro.email}`
-         config.contenedores.alumnos.email = `BORRAR-${config.contenedores.alumnos.email}`
-         config.contenedores.tutores.email = `BORRAR-${config.contenedores.tutores.email}`
-         config.ou.claustro.name = `BORRAR-${config.ou.claustro.name}`
-         config.ou.alumnos.name = `BORRAR-${config.ou.alumnos.name}`
-         config.ou.misc.name = `BORRAR-${config.ou.misc.name}`
-         config.departamentos = config.departamentos.map(dpto => Object.assign(dpto, {email: `BORRAR-${dpto.email}`}));
-      }
-
-      appendPre("NO HAY CONFIGURACIÖN: Debe forzarse al usuario a definir una.\n" +
-                "En en el ejemplo. Construimos una ex novo sin intervención del usuario.");
-
-      client.config.inicializar(config).then(response => {
-         console.log("DEBUG: seed", config);
-         console.log("DEBUG", response);
-         appendPre("\n\nConfiguración GENERADA");
-      });
-
-   });
-
-   client.addEventListener("signedin", function(e) {
+   client.on("signedin", function(e) {
       const button = document.getElementById("authorize");
       button.textContent = "Salir";
 
       const span = document.createElement("span");
       span.appendChild(document.createTextNode(client.identity.name + " <" + client.identity.email + ">"));
-
       button.parentNode.insertBefore(span, button.nextElementSibling);
+   });
+
+   // Cuando no se detecta configuración previa,
+   // se desencadena el evento "noconfig" que proporciona
+   // un objeto e.seed con una preconfiguración.
+   client.on("noconfig", function(e) {
+      generarConfiguracion(e.seed, client.config.utils.generarCuentaDepartamento);
+
+
+      // Añadimos el prefijo "BORRAR-" a todos los grupos
+      // para no interferir con los ya creados en el dominio.
+      {
+         e.seed.contenedores.claustro.email = `BORRAR-${e.seed.contenedores.claustro.email}`
+         e.seed.contenedores.alumnos.email = `BORRAR-${e.seed.contenedores.alumnos.email}`
+         e.seed.contenedores.tutores.email = `BORRAR-${e.seed.contenedores.tutores.email}`
+         e.seed.ou.claustro.name = `BORRAR-${e.seed.ou.claustro.name}`
+         e.seed.ou.alumnos.name = `BORRAR-${e.seed.ou.alumnos.name}`
+         e.seed.ou.misc.name = `BORRAR-${e.seed.ou.misc.name}`
+         e.seed.departamentos = e.seed.departamentos.map(dpto => Object.assign(dpto, {email: `BORRAR-${dpto.email}`}));
+      }
+
+      appendPre("NO HAY CONFIGURACIÖN: Debe forzarse al usuario a definir una.\n" +
+                "En en el ejemplo. Construimos una ex novo sin intervención del usuario.");
+
+      // Guardamos la configuración, tras lo cual
+      // se desencadena el evento "onready" de client.
+      e.seed.set();
+   });
+
+   client.on("onready", function(e) {
+      if(e.action === "set") appendPre("\n\nConfiguración GENERADA");
+      else appendPre("Configuración CARGADA");
+      
       Array.from(document.querySelectorAll("p button")).forEach(b => b.disabled = false);
    });
 
-   client.addEventListener("signedout", function(e) {
+   client.on("signedout", function(e) {
       const button = document.getElementById("authorize");
       button.textContent = 'Entrar';
 
@@ -246,4 +216,33 @@ window.onload = function(e) {
    });
    interfaz(cliente);
    cliente.init();
+}
+
+
+function appendPre(message) {
+  var pre = document.getElementById('content');
+  pre.appendChild(document.createTextNode(message + '\n'));
+}
+
+function clearPre() {
+  var pre = document.getElementById('content');
+   pre.innerHTML = "";
+}
+
+
+// Convierte la configuración precargada en apta.
+// Para ello, obtiene la dirección de email a partir del nombre
+// quitando espacios y caracteres no ingleses.
+function generarConfiguracion(config, generarCuenta) {
+   const cont = config.contenedores;
+
+   cont.claustro.email = cont.claustro.email || generarCuenta(cont.claustro.name);
+   cont.alumnos.email = cont.alumnos.email || generarCuenta(cont.alumnos.name);
+   cont.tutores.email = cont.tutores.email || generarCuenta(cont.tutores.name);
+   config.departamentos.forEach(dpto => {
+      dpto.email = dpto.email || generarCuenta(dpto.name);
+      dpto.description = `Departamento de ${dpto.name}`;
+   });
+
+   return config;
 }

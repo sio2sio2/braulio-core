@@ -20,14 +20,12 @@ function getBatchResult(result) {
 
 
 export function inicializar(config) {
-   return new Promise((resolve, reject) => {
-      crearObtener(Object.values(config.contenedores), true).then(creacion => {
-         poblar(config.contenedores.claustro, config.departamentos).then(response => {
-            Object.assign(response.creacion, creacion);
-            crearOus(config.ou).then(r => {
-               response.ou = r;
-               this.set(config).then(response => resolve(response));
-            });
+   crearObtener(Object.values(config.contenedores), true).then(creacion => {
+      poblar(config.contenedores.claustro, config.departamentos).then(response => {
+         Object.assign(response.creacion, creacion);
+         crearOus(config.ou).then(r => {
+            response.ou = r;
+            this.set(config);
          });
       });
    });
@@ -156,6 +154,7 @@ function poblar(grupo, miembros) {
       });
    });
 }
+
 
 function crearOus(ous) {
    if(Object.keys(ous).length === 0) return Promise.resolve({result: null});
