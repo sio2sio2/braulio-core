@@ -1,3 +1,5 @@
+import {Evented} from "./utils";
+
 /**
  * Autenticación OAuth2 de Google.
  *
@@ -11,7 +13,7 @@
  *       hosted_domain: "nuestro@dominio"  // Esto es opcional.
  *    });
  *
- *    // Añadimos con cliente.addEvenListener lo que queremos hacer cuando se produzcan
+ *    // Añadimos con cliente.on lo que queremos hacer cuando se produzcan
  *    // los eventos "succeed", "failed", "signedin", "signedout".
  *
  *    cliente.init();
@@ -22,6 +24,8 @@ function OAuthClient(params) {
    this.identity = null;
    this._events = {};     // Eventos registrados.
 }
+
+Object.assign(OAuthClient.prototype, Evented);
 
 /**
  * Inicializa el objeto propiamente.
@@ -34,55 +38,28 @@ OAuthClient.prototype.init = function() {
           // TODO: Controlar esto. ¿Puede usarse en vez de como está hecho hasta ahora para indicar el usuario en la web?
           //gapi.auth2.getAuthInstance().currentUser.listen(s => console.log("DEBUG", s));
           // Ejecutamos todas las acciones asociadas a la inicialización.
-          (this._events["succeed"] || []).forEach(f => f.call(this, {
-             type: "succeed",
-             target: this
-          }));
-       }, error => {
-          (this._events["failed"] || []).forEach(f => f.call(this, {
-             type: "failed",
-             target: this,
-             error: error
-          }));
-       });
+          this.fire("succeed");
+       }, error => this.fire("failed"));
    });
 }
 
-/**
- * Añade eventos que se disparan cuando:
- *
- * * succeed, el objeto se carga adecuadamente.
- * * failed, el objeto no puede cargarse.
- * * signedid, el usuario se autentica.
- * * signedout, el usuario se desautentica.
- */
-OAuthClient.prototype.addEventListener = function(eventname, f) {
-   this._events[eventname] = this._events[eventname] || []
-   this._events[eventname].push(f);
-}
 
 // QUé se hace cuando cambia de estado el objeto,
 // o sea, cuando el usuario ingresa o sale.
 OAuthClient.prototype._updateSigninStatus = function(isSignedIn) {
-   let e = isSignedIn;
-
    if(isSignedIn) {
-      e = "signedin";
       const identity = gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile();
       this.identity = {
          email: identity.getEmail(),
          name: identity.getName()
       }
+      this.fire("signedin");
    }
    else {
-      e = "signedout";
       this.identity = null;
+      this.fire("signedout");
    }
    
-   (this._events[e] || []).forEach(f => f.call(this, {
-       type: e,
-       target: this
-   }));
 }
 
 OAuthClient.prototype._isSignedIn = function() {

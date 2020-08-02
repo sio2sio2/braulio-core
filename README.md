@@ -127,8 +127,9 @@ coloque los elementos ``script``:
 
 ~~~html
 
-<script src="https://apis.google.com/js/api.js"></script>
-<script src="braulio-core.js"></script>
+   <script src="https://apis.google.com/js/api.js"></script>
+   <script src="braulio-core.js"></script>
+</html>
 
 ~~~
 
@@ -139,7 +140,7 @@ función ``Braulio``:
 
 window.onload = function(e) {
    const cliente = Braulio("config.json", {
-      clientId: "###---CLIENT ID---###,
+      clientId: "###---CLIENT ID---###",
       apiKey: "###---API KEY---###",
       hosted_domain: "iesmiinstituto.com"
    });
@@ -176,116 +177,192 @@ Recuerde que en el código HTML deberá incluir la carga de ``gapi``:
 
 ~~~html
 
-<script src="https://apis.google.com/js/api.js"></script>
+   <script src="https://apis.google.com/js/api.js"></script>
+</html>
 
 ~~~
 
-## API
+## Inicialización (guía rápida)
 
-### Inicialización
+~~~javascript 
 
-Utilice la función cargadora:
+window.onload = function(e) {
+   // Elemento sobre el que pinchamos para
+   // autenticarnos o salirnos de la aplicación.
+   const ingresar = document.getElementById("ingresar");
 
-~~~javascript
+   // Creamos nuestro resolutivo mayordomo
+   const mayordomo = Braulio("config.json", {
+            clientId: "###---CLIENT ID---###",
+            apiKey: "###---API KEY---###",
+            hosted_domain: "iesmiinstituto.com"
+         });
 
-const cliente = Braulio("config.json", {
-         clientId: "###---CLIENT ID---###",
-         apiKey: "###---API KEY---###",
-         hosted_domain: "iesmiinstituto.com"
+   // Al cargarse convenientemente el autenticador de Google,
+   // dotamos de funcionalidad al botón.
+   mayordomo.on("succeed", function(e) {
+      ingresar.addEventListener("click", e => {
+         if(e.target.textContent === "Entrar") mayordomo.signin();
+         else mayordomo.signout();
+
       });
+   }):
 
-// Código javascript relacionado con los eventos *succeed*,
-// *failed*, *noconfig*, *signedin* y *signedout*. 
+   // Pero si no se carga bien no hay nada que hacer.
+   mayordomo.on("failed", function(e) {
+      ingresar.addEventListener("click", funcion(e) {
+         alert("IMPOSIBLE CARGAR EL MÓDULO DE AUTENTICACIÓN")
+      });
+   });
 
-cliente.init();
+   // Nos hemos autenticado con éxito,
+   // pero aún puede no estar disponible la configuración.
+   mayordomo.on("signedin", function(e) {
+      ingresar.textContent = "Salir";
 
-~~~
+      // Podríamos habilitar elementos de la interfaz que no
+      // requirieran la información contenida en el fichero de configuración
+   });
 
-El primer parámetro define el nombre que se usará para el fichero de
-configuración que se almacena en el Drive del usuario que se autentica. El
-segundo argumento define los parámetros que se usarán para la autenticación.
+   // Se ha cargado ya la configuración
+   mayordomo.on("onready", functioN(e) {
+      // Cuando e.action es "set" llegamos al evento después de haber
+      // generado la configuración (gracias al evento previo "noconfig").
+      if(e.action === "set") console.log("Configuración generada y cargada");
+      else console.log("Configuración cargada");
 
-El cliente no se inicializa propiamente hasta que no se usa su método
-``.init()``, pero antes de invocarlo es necesario que esté cargado todo el
-código relacionado con los cinco eventos asociados a la inicialización:
+      // Habilitamos la interfaz, pòrque ya está todo
+      // preparado para poder gestionar G-Suite.
+   }):
 
-| Evento    | Se dispara cuando....        |
-| --------- | ---------------------------- |
-| succeed   | se inicializó con éxito.     |
-| failed    | error en la inicialización.  |
-| signedin  | se produjo autenticación.    |
-| noconfig  | no hay configuración previa. |
-| signedout | hubo desautenticación.       |
+   // Si al autenticarnos nos encontramos con que
+   // no había configuración previa (p.e. la primera
+   // ver que ejecutamos la aplicación).
+   mayordomo.on("noconfig", function(e) {
+      // El vento proporciona una preconfiguración que muy probablemente
+      // será necesaria  completar interactivamente por el usuario.
+      const config = e.seed;
 
-En realidad los tres últimos eventos están relacionados con el proceso de
-autenticación, pero la inicialización intenta una autenticación automática, por
-lo que al menos las acciones relacionadas con los eventos de *signin* y
-**noconfig** es pertinente tenerlos definidos antes de proceder a la
-inicialización.
+      // Manipulamos la semilla para que añada todo lo necesario.
 
-Para asociar acciones a los eventos, debe usarse el método
-``.addeventListener()``:
+      // iCUando se haya completado de manipular, guardamos la configuración,
+      // al término de lo cual se desencadenará el evento onready.
+      config.set();
+   });
 
-~~~javascript
+   // Nos hemos autenticado con éxito,
+   // pero aún puede no estar disponible la configuración.
+   mayordomo.on("signedout", function(e) {
+      ingresar.textContent = "Entrar";
 
-cliente.addEventListener("succeed", function(e) {  // this es cliente
-   console.log(e.type === "succeed");    // true.
-   console.log(e.target === cliente);    // true.
+      // Deshabilitamos los elementos de la interfaz
+      // que nos permiten gestionar G-Suite
+   });
 
-   // Habilitamos el botón que permite la autenticación.
-   document.getElementById("authorize").disabled = false;
-});
+   mayordomo.init();
+}
 
 ~~~
 
 Échele un ojo al [ejemplo de
 usuo](https://github.com/sio2sio2/braulio-core/tree/master/examples).
 
-### Autenticación
+## API
 
-El objeto que devuelve la función ``Braulio`` tiene dos métodos relacionados con
-la autenticación:
+### Braulio
+
+#### Inicialización
+
+La inicialización podemos dividirla en tres tareas:
+
+- La creación del objeto mediante la función ``Braulio``.
+
+  ~~~javascript
+
+      const mayordomo = Braulio("config.json", {
+               clientId: "###---CLIENT ID---###",
+               apiKey: "###---API KEY---###",
+               hosted_domain: "iesmiinstituto.com"
+            });
+
+  ~~~
+
+  El primer parámetro define el nombre que se usará para el fichero de
+  configuración almacenado en el Drive del usuario que se autentica. El
+  segundo argumento define los parámetros usandos en el proceso de
+  autentición con Google.
+
+- La definición de las tareas relacionadas con la autenticación.
+
+  La función anterior no crea más que el *mayordomo*, porque antes de hacer algo
+  es necesario prescribir qué debe hacerse ante una autenticación, un error en
+  la carga de la autenticación, etc. Para ello es necesario asignar acciones
+  a los distintos eventos:
+
+  | Evento    | Se dispara cuando....        |
+  | --------- | ---------------------------- |
+  | succeed   | se inicializó con éxito.     |
+  | failed    | error en la inicialización.  |
+  | signedin  | se produjo la autenticación. |
+  | noconfig  | no hay configuración previa. |
+  | onready   | estamos listos para empezar, |
+
+  Existen, además, otros eventos no relacionados con la inicialización:
+
+  | Evento      | Se dispara cuando....                  |
+  | ----------- | -------------------------------------- |
+  | signedout   | se ha completado desautenticación.     |
+  | savedconfig | se ha guardado la configuración,       |
+  | onreset     | nos desvinculamos de la configuración. |
+
+  ![Eventos del mayordomo](images/eventos.png)
+
+- La inicialización propiamente dicha a través del método ``.init()``:
+
+  ~~~javascript
+
+     mayordomo.init();
+
+  ~~~
+
+#### Autenticación
+
+La autenticación tiene asociados dos métodos:
 
 | Método  | Descripción                          |
 | ------- | ------------------------------------ |
 | signin  | Arranca el proceso de autenticación. |
 | signout | Desconecta la aplicación,            |
 
-y dos eventos homónimos:
+Por ello, en el ejemplo de código propuesto en la guía rápida, asociamos estos
+dos métodos al botón que designamos para entrar y salir de la aplicación:
+
+~~~javascript
+
+ingresar.addEventListener("click", e => {
+   if(e.target.textContent === "Entrar") mayordomo.signin();
+   else mayordomo.signout();
+});
+
+~~~
+
+Para cuando se completa el ingreso o la salida, hay dos eventos:
 
 | Evento    | Se desencadena cuando...              |
 | --------- | ------------------------------------- |
 | signedin  | ... el usuario abre una sesión.       |
 | signedout | ... el usuario sale de la sesión.     |
 
-Por tanto, si planteamos crear un botón para controlar el ingreso del usuario
-podríamos hacer algo como esto:
+Es importante significar que completar con éxito la autenticación, no significa
+que estemos en disposición de gestionar G-Suite, ya que la aplicación necesita
+también leer el fichero de configuración. Esta es un acción que sólo puede
+realizarse tras la autenticación, por lo que al desencadenarse el evento
+**onready**, podemos estar seguros de que la aplicación ya está lista para que
+el usuario interactúe plenamente con ella.
 
-~~~javascript
+#### Eventos
 
-// Braulio está asociado a la variable cliente.
-
-document.getElementById("ingreso").onclick = function(e) {
-   const conectado = this.textContent === "Salir",
-         // Si estoy conectado, desconecto; si desconectado, conecto.
-         accion = conectado?"signout":"signin";
-
-   cliente[evento]();
-}
-
-cliente.addEventListener("signedin", function(e) {
-   const button = document.getElementById("ingreso");
-   button.textContent = "Salir";
-
-   console.log(`${cliente.identity.name} <${cliente.identity.email}>`);
-});
-
-cliente.addEventListener("signedin", function(e) {
-   const button = document.getElementById("ingreso");
-   button.textContent = "Entrar";
-});
-
-~~~
+SEGUIR POR AQUÍ.
 
 ### Configuración
 

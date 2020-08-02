@@ -12,18 +12,10 @@ function crearCliente(name, params) {
                              "https://www.googleapis.com/auth/admin.directory.orgunit")
                    }));
 
-   // Consigue el fichero de configuración al identificarse.
-   // Si no hay configuración, se desencadena el evento noconfig.
-   cliente.addEventListener("signedin", async e => {
-      const config = e.target.config = new Config(name);
-      if(await config.vacia) {
-         (e.target._events["noconfig"] || []).forEach(f => f.call(e.target, {
-            type: "noconfig",
-            target: this
-         }));
-      }
-   });
-   cliente.addEventListener("signedout", e => e.target.config = null);
+   const config = cliente.config = new Config(cliente, name);
+
+   cliente.on("signedin", e => config.init());
+   cliente.on("signedout", e => config.reset());
 
    cliente.api = api;  // API de comunicación con G-Suite.
 
