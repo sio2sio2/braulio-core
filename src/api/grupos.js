@@ -1,4 +1,5 @@
-import {patchString, listarEntidad} from "./misc.js";
+import {patchString} from "./misc.js";
+import {listarEntidad} from "./entidades.js";
 
 /**
  * Obtiene una lista de de grupos.
@@ -60,8 +61,20 @@ export function crear(info) {
 }
 
 
-export function actualizar(id, info) {
-   id = patchString(id);
+export function actualizar(info) {
+   let id;
+   info = Object.assign({}, info);
+
+   if(info.email) info.email = patchString(info.email);
+   if(info.id) {
+      id = info.id;
+      delete info.id;
+   }
+   else if(info.email) {
+      id = info.email;
+      delete info.email;
+   }
+
    return gapi.client.request({
             path: `https://www.googleapis.com/admin/directory/v1/groups/${id}`,
             method: "PUT",

@@ -1,4 +1,4 @@
-import {listarEntidad} from "./misc.js";
+import {listarEntidad} from "./entidades.js";
 
 /**
  * Obtiene una lista de usuarios.

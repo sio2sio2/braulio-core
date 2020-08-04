@@ -157,54 +157,81 @@ function interfaz(client) {
    });
 
 
-   document.getElementById("im").addEventListener("click", function(e) {
+   document.getElementById("ce").addEventListener("click", function(e) {
       clearPre();
-      client.api.crearClaustro("borrar@iescastillodeluna.es",
-         [{
-            email: "borrar2@iescastillodeluna.es",
-            nombre: "Borrarlo2"
-         }, {
-            email: "noexiste@iescastillodeluna.es",
-            nombre: "Inexistente"
-         }])
+      const grupos = [
+         {
+            name: "REBORRAR-grupotest",
+            email: "REBORRAR-grupotest",
+            description: "Grupo de pruebas REBORRAR",
+         },
+         {
+            name: "REBORRAR-grupotest2",
+            email: "REBORRAR-grupotest2",
+            description: "Grupo de pruebas REBORRAR2.",
+         }
+      ]
+
+      const batch = client.api.newBatch();
+      grupos.forEach(gr => batch.add(client.api.entidades.operar("grupo", gr), {id: gr.email}));
+      batch
          .then(response => {
-            appendPre('Departamento: ' + response.dpto.code + " (" + response.dpto.message + ")");
-            for(const dpto in response.members) {
-               appendPre(dpto + ': ' + response.members[dpto].code + " (" + response.members[dpto].message + ")");
-            }
-         });
-   });
-
-   document.getElementById("lm").addEventListener("click", async function(e) {
-      clearPre();
-      try {
-         var i = 1;
-         for await (const miembro of client.api.miembros.listar("borrar@iescastillodeluna.es").iter()) {
-            appendPre(i + ". " + miembro.email + " (" + miembro.type + ")");
-            i++;
-         } 
-      }
-      catch(error) {
-         appendPre("ERROR: "+ error.status);
-      }
-   });
-
-   document.getElementById("vm").addEventListener("click", function(e) {
-      const grupo = "borrar@iescastillodeluna.es";
-      try {
-         client.api.miembros.vaciar(grupo).then(response => {
-            clearPre();
-            var i = 1;
-            for(const email in response) {
-               appendPre(i + ". " + email + ": " + response[email].code + " (" + response[email].message + ")");
+            appendPre("Grupos creados::\n");
+            let i=0;
+            for(const [email, result] of Object.entries(response)) {
                i++;
+               appendPre(`${i}. ${email}: ${result.value?"OK":"Fallo"}`);
+               console.log("DEBUG", client.api.interpretarResultado("crear", result.value || result.reason));
+            }
+         }, error => {
+            console.error("DEBUG: Error", error);
+         });
+   });
+
+   document.getElementById("me").addEventListener("click", function(e) {
+      clearPre();
+      client.api.grupos.listar({query: "email:REBORRAR-*"}).get().then(grupos => {
+         if(grupos.length === 0) {
+            appendPre("No hay grupos que modificar");
+         }
+
+         const batch = client.api.newBatch();
+         grupos.forEach(gr => {
+            const grupo = {id: gr.id, description: `${gr.description}. Modificado`}
+            batch.add(client.api.entidades.operar("grupo", grupo), {id: gr.email});
+         });
+
+         batch.then(response => {
+            appendPre("Grupos a los que se les ha modificado la descripción:\n");
+            let i=0;
+            for(const [email, result] of Object.entries(response)) {
+               i++;
+               appendPre(`${i}. ${email}: ${result.value?"OK":"Fallo"}`);
             }
          });
-      }
-      catch(error) {
-         console.warn("ERROR CAZADO:", error);
-      }
+      });
+   });
 
+   document.getElementById("be").addEventListener("click", async function(e) {
+      clearPre();
+      client.api.grupos.listar({query: "email:REBORRAR-*"}).get().then(grupos => {
+         if(grupos.length === 0) return;
+
+         const batch = gapi.client.newBatch();
+         for(const grupo of grupos) {
+            batch.add(client.api.grupos.borrar(grupo.email), {id: grupo.email});
+         }
+
+         batch.then(response => {
+            appendPre("Borrado los grupos de prueba:");
+            let i = 0;
+            for(const [email, result] of Object.entries(response.result)) {
+               i++;
+               const res = result.status === 204?"OK":"Fallo";
+               appendPre(`${i}. ${email}: ${res}.`);
+            }
+         })
+      });
    });
 }
 
