@@ -16,7 +16,3 @@ import {isID} from "./misc.js";
 import newBatch from "./batch.js";
 
 export {usuarios, grupos, miembros, ou, isID, entidades, newBatch};
-
-// TODO: Eliminar
-import {interpretarResultado} from "./misc.js"
-export {interpretarResultado}

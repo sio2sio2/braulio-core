@@ -3,10 +3,10 @@
  * manipilar el formato de los resultados.
  */
 
-export default function(formatter) {
-   formatter = formatter || (i => i);
+import {formatear, operar} from "./entidades.js";
 
-   const _requests = {};
+export default function() {
+   const requests = [];
    let fresolve, freject;
 
    const p = new Promise(function(resolve, reject) {
@@ -14,15 +14,35 @@ export default function(formatter) {
       freject = reject;
    });
 
+   /**
+    * @param {Object} request: Petición que se añade al procesamiento.
+    * Puede ser un objeto gapi.client.request o una entidad como la
+    * que hay que pasar a la función operar.
+    */
    p.add = function(request, params) {
-      params = params || {}
-      if(params.id === undefined) params.id = Math.floor(Math.random()*10**15);
-      _requests[params.id] = request;
+      let id, formatter;
+
+      if(request.then) {  // Es directamente una petición
+         params = params || {}
+         id = params.id = Math.floor(Math.random()*10**15);
+         formatter = value => value;
+      }
+      else {
+         const entidad = (request.grupo || request.usuario);
+         id = typeof entidad === "string"?entidad:(entidad.email || entidad.id);
+
+         if(requests.map(e => e[0]).includes(id)) throw new Error(`Identificador '${id} repetido`);
+
+         request = operar(request);
+         formatter = value => formatear(request.operacion, value);
+      }
+
+      requests.push([id, request, formatter]);
    }
 
    p.then = function(fok, frej) {
-      Promise.allSettled(Object.values(_requests))
-         .then(ok => fresolve(Object.fromEntries(Object.keys(_requests).map((k, i) => [k, formatter(ok[i])]))));
+      Promise.allSettled(requests.map(e => e[1]))
+         .then(ok => fresolve(Object.fromEntries(requests.map((k, i) => [k[0], k[2](ok[i].value || ok[i].reason)]))));
       return Promise.prototype.then.call(this, fok, frej);
    }
 
