@@ -6,45 +6,53 @@
 import {formatear, operar} from "./entidades.js";
 
 export default function() {
-   const requests = [];
-   let fresolve, freject;
+   let fresolve;
 
-   const p = new Promise(function(resolve, reject) {
-      fresolve = resolve;
-      freject = reject;
+   const items = [],
+         promises = new Promise(resolve => {
+            fresolve = resolve;
+         });
+
+   const p = new Promise(async resolve => {
+      const requests = await items;
+      Promise.allSettled(requests.map(e => e[1]))
+        .then(ok => resolve(Object.fromEntries(requests.map((k, i) => [k[0], k[2](ok[i].value || ok[i].reason)]))));
    });
 
-   /**
-    * @param {Object} request: Petición que se añade al procesamiento.
-    * Puede ser un objeto gapi.client.request o una entidad como la
-    * que hay que pasar a la función operar.
-    */
-   p.add = function(request, params) {
-      let id, formatter;
-
-      if(request.then) {  // Es directamente una petición
-         params = params || {}
-         id = params.id = Math.floor(Math.random()*10**15);
-         formatter = value => value;
-      }
-      else {
-         const entidad = (request.grupo || request.usuario);
-         id = typeof entidad === "string"?entidad:(entidad.email || entidad.id);
-
-         if(requests.map(e => e[0]).includes(id)) throw new Error(`Identificador '${id} repetido`);
-
-         request = operar(request);
-         formatter = value => formatear(request.operacion, value);
-      }
-
-      requests.push([id, request, formatter]);
+   p.end = function() {
+      fresolve(items);
+      return p;
    }
 
    p.then = function(fok, frej) {
-      Promise.allSettled(requests.map(e => e[1]))
-         .then(ok => fresolve(Object.fromEntries(requests.map((k, i) => [k[0], k[2](ok[i].value || ok[i].reason)]))));
+      p.end();
       return Promise.prototype.then.call(this, fok, frej);
    }
 
+   /**
+    * Añade una nueva petición al procesamiento.
+    *
+    * @param {Object} item: Petición que puede ser una gapi.client.Request o
+    * un objeto de los que acepta la función "operar".
+    */
+   p.add = function(item) {
+      let id, formatter;
+
+      if(item.then) {  // Es directamene una petición.
+         id = Math.floor(Math.random()*10**15);
+         formatter = value => value;
+      }
+      else {
+         const entidad = (item.grupo || item.usuario);
+         id = typeof entidad === "string"?entidad:(entidad.email || entidad.id);
+
+         item = operar(item);
+         formatter = value => formatear(item.operacion, value);
+      }
+
+      items.push([id, item, formatter]);
+   }
+
    return p;
+
 }

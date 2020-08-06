@@ -24,6 +24,8 @@ function interfaz(client) {
    // se desencadena el evento "noconfig" que proporciona
    // un objeto e.seed con una preconfiguración.
    client.on("noconfig", function(e) {
+      console.log("DEBUG", e.seed);
+      return ;
       generarConfiguracion(e.seed, client.utils.generarCuentaDepartamento);
 
 
@@ -157,7 +159,7 @@ function interfaz(client) {
    });
 
 
-   document.getElementById("ce").addEventListener("click", function(e) {
+   document.getElementById("ce").addEventListener("click", async function(e) {
       clearPre();
       const grupos = [
          {
@@ -174,17 +176,13 @@ function interfaz(client) {
 
       const batch = client.api.newBatch();
       grupos.forEach(gr => batch.add({grupo: gr}));
-      batch
-         .then(response => {
-            appendPre("Grupos creados::\n");
-            let i=0;
-            for(const [email, result] of Object.entries(response)) {
-               i++;
-               appendPre(`${i}. ${email}: ${result.error.code === 0?"OK":"Fallo"}`);
-            }
-         }, error => {
-            console.error("DEBUG: Error", error);
-         });
+
+      appendPre("Grupos creados::\n");
+      let i=0;
+      for(const [email, result] of Object.entries(await batch.end())) {
+         i++;
+         appendPre(`${i}. ${email}: ${result.error.code === 0?"OK":"Fallo"}`);
+      }
    });
 
    document.getElementById("me").addEventListener("click", function(e) {
@@ -214,26 +212,25 @@ function interfaz(client) {
 
    document.getElementById("be").addEventListener("click", async function(e) {
       clearPre();
-      client.api.grupos.listar({query: "email:REBORRAR-*"}).get().then(grupos => {
-         if(grupos.length === 0) {
-            appendPre("No hay grupos de prueba que borrar");
-            return;
-         }
 
-         const batch = client.api.newBatch();
-         grupos.forEach(gr => batch.add({grupo: gr.email}));
+      const grupos = await client.api.grupos.listar({query: "email:REBORRAR-*"}).get();
 
-         appendPre("Borrando los grupos de prueba... ");
-         batch.then(response => {
-            let i=0;
-            for(const [email, result] of Object.entries(response)) {
-               i++;
-               appendPre(`${i}. ${email}: ${result.error.code === 0?"OK":"Fallo"}`);
-            }
-            console.log("DEBUG", response);
-         });
+      if(grupos.length === 0) {
+         appendPre("No hay grupos de prueba que borrar");
+         return;
+      }
 
-      });
+      const batch = client.api.newBatch();
+      grupos.forEach(gr => batch.add({grupo: gr.email}));
+
+      appendPre("Borrando los grupos de prueba... ");
+
+      const response = await batch.end();
+      let i=0;
+      for(const [email, result] of Object.entries(response)) {
+         i++;
+         appendPre(`${i}. ${email}: ${result.error.code === 0?"OK":"Fallo"}`);
+      }
    });
 }
 

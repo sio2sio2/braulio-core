@@ -27,6 +27,22 @@ export function obtener(ou) {
    });
 }
 
+
+export function actualizar(ou) {
+   const id = ou.orgUnitId || ou.orgUbitPath;
+
+   if(ou.orgUnitId) {
+      ou = Object.assign({}, ou);
+      delete ou.orgUnitId;
+   }
+
+   return gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits/${id}`,
+      method: "PUY",
+      body: ou
+   });
+}
+
 /**
  * Borra una unidad de organización.
  *
