@@ -1,9 +1,7 @@
-import DEFAULT_CONFIG from "./config.json";
 import {inicializar} from "./init.js";
 import * as grupos from "../api/grupos.js";
 import * as ou from "../api/ou.js";
 
-const default_config = JSON.stringify(DEFAULT_CONFIG);
 let singleton = null;
 
 /**
@@ -52,11 +50,7 @@ Object.defineProperties(Config.prototype, {
       get() { return this._content; }
    },
    status: {
-      get() {
-         if(this.content === null) return "UNAVAILABLE";
-         else if(Object.keys(this.content).length === 0) return "NOCONFIG";
-         else return "READY";
-      }
+      get() { return this.content === null?"PRECONFIG":"READY"; }
    }
 });
 
@@ -95,7 +89,7 @@ Config.prototype.init = function() {
                body: params
             }).then(response => {
                   this._id = response.result.id;
-                  this.set(null);  // Almacenamos una configuración vacía.
+                  this.set(null);  // Almacenamos una configuración basada en la semilla.
                });
             break;
          case 1:
@@ -124,34 +118,29 @@ Config.prototype.init = function() {
  * Fija la configuración en el Drive.
  *
  * @param {Object} content: Objeto que será el nuevo contenido.
+ *    Si el contenido es nulo, se desencadena se genera el fichero
+ *    a partir de la semilla y se dispara "preconfig". De lo contrario,
+ *    se guarda y se desencadena "saveconfig".
  */
 Config.prototype.set = function(content) {
    if(this.id === null) throw new Error("Configuración no inicializada");
-   const body = content?JSON.stringify(mrproper(JSON.parse(JSON.stringify(content)))):{},
-         prestatus = this.status;
 
-   this._content = content || null;
-
-   gapi.client.request({
-      path: "https://www.googleapis.com/upload/drive/v3/files/" + this.id,
-      method: "PATCH",
-      body: body,
-   }).then(response => {
-         if(content) {
-            // El evento sólo se desencadena si previamente no había configuración.
-            if(prestatus !== "READY") this.auth.fire("onready", {action: "set"});
-            this.auth.fire("savedconfig");
-         }
-         else {
-            const seed = JSON.parse(default_config);
-            // Este método no es enumerable,
-            // así que no aparecerá al recorrer el objeto.
-            Object.defineProperty(seed, "set", {
-               value: config => inicializar.call(this, config || seed)
-            });
-            this.auth.fire("noconfig", {seed: seed});
-         }
+   if(content) {
+      gapi.client.request({
+         path: "https://www.googleapis.com/upload/drive/v3/files/" + this.id,
+         method: "PATCH",
+         body: JSON.stringify(mrproper(JSON.parse(JSON.stringify(content)))),
+      }).then(response => {
+         const evento = this.status === "PRECONFIG"?"preconfig":"savedconfig";
+         this._content = content;
+         this.auth.fire(evento);
       });
+   }
+   else {
+      this._content = null;
+      this.auth.fire("noconfig");
+      inicializar.call(this).then(content => this.set(content));
+   }
 }
 
 

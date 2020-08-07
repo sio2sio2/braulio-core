@@ -20,37 +20,22 @@ function interfaz(client) {
       button.parentNode.insertBefore(span, button.nextElementSibling);
    });
 
+   client.on("noconfig", function(e) {
+      appendPre("NO HAY CONFIGURACIÖN, así que se genera una a partir de una inicial");
+   });
+
    // Cuando no se detecta configuración previa,
    // se desencadena el evento "noconfig" que proporciona
    // un objeto e.seed con una preconfiguración.
-   client.on("noconfig", function(e) {
-      console.log("DEBUG", e.seed);
-      return ;
-      generarConfiguracion(e.seed, client.utils.generarCuentaDepartamento);
+   client.on("preconfig", function(e) {
+      appendPre("CONFIGURACIÓN GENERADA. Ahora debería darse la posibilidad de modificación interactiva.\n" +
+                "En este ejemplo, nos limitamos a aceptarla");
 
-
-      // Añadimos el prefijo "BORRAR-" a todos los grupos
-      // para no interferir con los ya creados en el dominio.
-      {
-         e.seed.contenedores.claustro.email = `BORRAR-${e.seed.contenedores.claustro.email}`
-         e.seed.contenedores.alumnos.email = `BORRAR-${e.seed.contenedores.alumnos.email}`
-         e.seed.contenedores.tutores.email = `BORRAR-${e.seed.contenedores.tutores.email}`
-         e.seed.ou.claustro.name = `BORRAR-${e.seed.ou.claustro.name}`
-         e.seed.ou.alumnos.name = `BORRAR-${e.seed.ou.alumnos.name}`
-         e.seed.ou.misc.name = `BORRAR-${e.seed.ou.misc.name}`
-         e.seed.departamentos = e.seed.departamentos.map(dpto => Object.assign(dpto, {email: `BORRAR-${dpto.email}`}));
-      }
-
-      appendPre("NO HAY CONFIGURACIÖN: Debe forzarse al usuario a definir una.\n" +
-                "En en el ejemplo. Construimos una ex novo sin intervención del usuario.");
-
-      // Guardamos la configuración, tras lo cual
-      // se desencadena el evento "onready" de client.
-      e.seed.set();
+      client.fire("onready", {action: "set"});
    });
 
    client.on("onready", function(e) {
-      if(e.action === "set") appendPre("\n\nConfiguración GENERADA");
+      if(e.action === "set") appendPre("Hecho");
       else appendPre("Configuración CARGADA");
       
       Array.from(document.querySelectorAll("p button")).forEach(b => b.disabled = false);
@@ -141,6 +126,7 @@ function interfaz(client) {
 
          const config = client.config.content;
          for(const ou of Object.values(config.ou || {})) {
+            if(!ou.orgUnitId) continue;
             batch.add(client.api.ou.borrar(ou.orgUnitId), {id: ou.orgUnitPath});
          }
 
@@ -253,22 +239,4 @@ function appendPre(message) {
 function clearPre() {
   var pre = document.getElementById('content');
    pre.innerHTML = "";
-}
-
-
-// Convierte la configuración precargada en apta.
-// Para ello, obtiene la dirección de email a partir del nombre
-// quitando espacios y caracteres no ingleses.
-function generarConfiguracion(config, generarCuenta) {
-   const cont = config.contenedores;
-
-   cont.claustro.email = cont.claustro.email || generarCuenta(cont.claustro.name);
-   cont.alumnos.email = cont.alumnos.email || generarCuenta(cont.alumnos.name);
-   cont.tutores.email = cont.tutores.email || generarCuenta(cont.tutores.name);
-   config.departamentos.forEach(dpto => {
-      dpto.email = dpto.email || generarCuenta(dpto.name);
-      dpto.description = `Departamento de ${dpto.name}`;
-   });
-
-   return config;
 }

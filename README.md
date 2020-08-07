@@ -228,28 +228,36 @@ window.onload = function(e) {
 
    // Se ha cargado ya la configuración
    mayordomo.on("onready", functioN(e) {
-      // Cuando e.action es "set" llegamos al evento después de haber
-      // generado la configuración (gracias al evento previo "noconfig").
-      if(e.action === "set") console.log("Configuración generada y cargada");
-      else console.log("Configuración cargada");
+      // Cuando e.action es "get" llegamos al evento habiendo
+      // cargado normalmente la configuración existente.
+      if(e.action === "get") console.log("Configuración cargada");
+      else console.log("Configuración generada y cargada");
 
       // Habilitamos la interfaz, pòrque ya está todo
       // preparado para poder gestionar G-Suite.
    }):
 
    // Si al autenticarnos nos encontramos con que
-   // no había configuración previa (p.e. la primera
-   // ver que ejecutamos la aplicación).
+   // no hay configuración previa (p.e. la primera
+   // ver que ejecutamos la aplicación). Antes de generar
+   // una inicial se lanza este evento.
    mayordomo.on("noconfig", function(e) {
-      // El vento proporciona una preconfiguración que muy probablemente
-      // será necesaria  completar interactivamente por el usuario.
-      const config = e.seed;
+      console.log("No hay configuración");
 
-      // Manipulamos la semilla para que añada todo lo necesario.
+      // Quizás queramos hacer algo, aunque no es obligatorio.
+   });
 
-      // iCUando se haya completado de manipular, guardamos la configuración,
-      // al término de lo cual se desencadenará el evento onready.
-      config.set();
+
+   // Ya generada una configuración inicial, se lanza este evento.
+   mayordomo.on("preconfig", function(e) {
+      console.log(this.config.content);  // Aquí está la configuración inicial
+
+      // Es probable que queramos modificar la configuración
+      // añadiendo departamentos, etc. de forma interactiva.
+      // ...
+
+      // Una vez modificada la configuración, la aplicación estará lista.
+      this.fire("onready", {action: "set"});
    });
 
    // Nos hemos autenticado con éxito,
@@ -303,13 +311,14 @@ La inicialización podemos dividirla en tres tareas:
 
   <a name="eventos"></a>
 
-  | Evento       | Se dispara cuando....        |
-  | ------------ | ---------------------------- |
-  | ``succeed``  | se inicializó con éxito.     |
-  | ``failed``   | error en la inicialización.  |
-  | ``signedin`` | se produjo la autenticación. |
-  | ``noconfig`` | no hay configuración previa. |
-  | ``onready``  | estamos listos para empezar, |
+  | Evento        | Se dispara cuando....                  |
+  | ------------- | -------------------------------------- |
+  | ``succeed``   | se inicializó con éxito.               |
+  | ``failed``    | error en la inicialización.            |
+  | ``signedin``  | se produjo la autenticación.           |
+  | ``noconfig``  | no hay configuración previa.           |
+  | ``preconfig`` | se acaba de generar una conf. inicial. |
+  | ``onready``   | estamos listos para empezar,           ||
 
   Existen, además, otros eventos no relacionados con la inicialización:
 
@@ -328,6 +337,10 @@ La inicialización podemos dividirla en tres tareas:
      mayordomo.init();
 
   ~~~
+
+  Esto arrancará el proceso de inicialización y, dependiendo del caso, irá
+  desencadenando los eventos correspondientes (razón por la cual debía
+  estar definido qué hacerse antes de utilizar el método).
 
 #### Autenticación
 
@@ -349,6 +362,15 @@ ingresar.addEventListener("click", e => {
 });
 
 ~~~
+
+---
+**Nota**
+
+No obstante, si el usuario ya se encontraba autenticado (p.e. porque se había
+consultado previamente el correo de *Gmail*), esta autenticación será automática
+y no requerirá explícitmanete ejecutar el método.
+
+---
 
 Para cuando se completa el ingreso o la salida, hay dos eventos:
 
@@ -400,13 +422,19 @@ Para todos los tipos de eventos el objeto ``e`` disponible en las funciones disp
 
 En algunos tipos, puede presentar algún atributo más. El evento *onready* añade:
 
-| Atributo    | Descripción                                                                       |
-| ----------- | --------------------------------------------------------------------------------- |
-| ``action``  | Indica si se desencadena al recuperar (*get*) o generar (*set*) la configuración. |
+| Atributo    | Descripción                                                                  |
+| ----------- | ---------------------------------------------------------------------------- |
+| ``action``  | Con valor *get* indica que se desencadena al leer la configuración guardada. |
 
 En el caso de ``.fire()``, si se le proporciona como argumento un objeto
 adicional, los atributos de éste se añaden a los del objeto evento disponible
-en las funciones disparadas.
+en las funciones disparadas:
+
+~~~javascript
+
+   mayordomo,fire("onready", {action: "set"});
+
+~~~
 
 ### Configuración
 
@@ -459,60 +487,58 @@ alguno de los nombres de grupo inutilice la aplicación. Al completarse con
 - Si lo encuentra, hará consultas para obtener los nombres, direcciones y
   descripciones, de los grupos y la ruta de las unidades organizativas a partir
   de los identificadores almacenados. Una vez completada esta tarea se
-  disparará el evento *fire*.
-- Si no lo encuentra, disparará el evento *noconfig* para que pueda crearse
-  una configuración inicial, que añade un atributo *seed* con una preconfiguración:
+  disparará el evento *onready*.
+- Si no lo encuentra, disparará el evento *noconfig*, generará un fichero
+  de configuración predeterminado y disparará el evento *preconfig*, útil por
+  si se quiere habilitar que el usaurio pueda modificar ese fichero predefinido.
 
   ~~~javascript
 
   mayordomo.on("noconfig", function(e) {
-     // El evento proporciona una preconfiguración que muy probablemente
-     // será necesaria  completar interactivamente por el usuario.
-     const config = e.seed;
-
-     // Manipulamos la semilla para que añada todo lo necesario.
-
-     // iCUando se haya completado de manipular, guardamos la configuración,
-     // al término de lo cual se desencadenará el evento onready.
-     config.set();
+      // Aquí podemos incluir algún aviso de que no hay configuració inicial
   });
 
-  ~~~
+  mayordomo.on("preconfig", function(e) {
+      // En este punto ya se ha generado el fichero predefinido y podemos
+      // habilitar algún mecanismo para que el usuario lo altere.
+      // Después de los cambios, lo lógico es que nosotros mismo forcemos
+      // el evento "onready":
 
-  Esta preconfiguración tiene la estructura del JSON mostrado, pero no incluye
-  identificadores, sino únicamente nombres (atributo *name*) para los usuarios,
-  grupos y unidades organizativas. Por ello, debemos manipular el objeto para
-  que añada al menos las direcciones de correo electrónico, y agregue
-  departamentos adicionales. Completda esta tarea, debemos usar el método
-  ``.set()`` de la propia semilla que guardará el contenido y lanzará el evento
-  *onready* para anunciarnos que el uso de la aplicación está listo. El método,
-  además, creará los grupos y unidades organizativas declarados que aún no
-  existan.
+      this.fire("onready", {action: "set"});
+  });
+
+   meyordomo.on("onready", function(e) {
+      if(e.action === "get") console.log("Configuración cargada");
+      else console.log("Configuración generada correctamente");
+
+      // Ahora podemos habilitar por completo la interfaz.
+   });
+
+  ~~~
 
 Por otra parte, el mayordomo dispone del atributo ``config`` que es un objeto
 con algunos atributos y métodos útiles:
 
-| Atributos               | Descripción                                          |
-| ----------------------- | ---------------------------------------------------- |
-| ``config.content``      | Objeto con la configuración.                         |
-| ``config.id``           | Identificador del fichero de configuración.          |
-| ``config.status``       | Devuelve el esto: *READY*, *UNAVAILABLE*, *NOCONFIG* |
-| ``config.set(content)`` | Guarda la nueva configuración.                       |
-| ``config.remove()``     | Elimina la configuración.                            |
+| Atributos               | Descripción                                 |
+| ----------------------- | --------------------------------------------|
+| ``config.content``      | Objeto con la configuración.                |
+| ``config.id``           | Identificador del fichero de configuración. |
+| ``config.status``       | Devuelve el estadoo: *PRECONFIG*, *READY*   |
+| ``config.set(content)`` | Guarda la nueva configuración.              |
+| ``config.remove()``     | Elimina la configuración.                   |
 
 Es importante tener presente tres cosas:
 
-1. El objeto que debe pasarse a ``config.set()`` se usará tal cual para dar valor
-   a ``config.content`` y, convenientemente depurado, para guardarse en el *Drive*.
-   La depuración consistirá en eliminar nombres y descripciones y dejar sólo los
-   identificadores.
+1. El objeto que debe pasarse a ``config.set()`` se usará sin modificaciones
+   para dar valor a ``config.content`` y, convenientemente depurado, para
+   guardarse en el *Drive*.  La depuración consistirá en eliminar nombres y
+   descripciones y dejar sólo los identificadores.
 
 1. ``config.remove()`` elimina exclusivamente el fichero de configuración, pero
-   no los grupos o las unidades organizativas declaradas en tal fichero. SI se
-   desea eliminar esa estructura habrá de llevarse acabo de forma independiente.
+   no los grupos o las unidades organizativas declaradas en tal fichero. Si se
+   desea eliminar esa estructura habrá de llevarlo acabo de forma independiente.
 
-1. Una configuración completa tendrá estado *READY*; una configuración sin
-   inicializar, estado *UNAVAILABLE*; y una configuraciónh pendiente de
-   generarse por primera vez *NOCONFIG:
+1. Una configuración completa tendrá estado *READY*; mientras que una
+   configuración que se está áun generando tendrá estado *PRECONFIG*.
 
 ### API de manipulación de G-Suite

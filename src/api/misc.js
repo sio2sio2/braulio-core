@@ -16,5 +16,5 @@ export function isID(string) {
  */
 export function patchString(string) {
    const domain = gapi.auth2.getAuthInstance().currentUser.get().getHostedDomain();
-   return (string.includes('@') || isID(string))?string:`${string}@${domain}`;
+   return ((string.includes('@') || isID(string))?string:`${string}@${domain}`).toLowerCase();
 }

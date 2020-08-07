@@ -144,23 +144,26 @@ export function formatear(operacion, response) {
          }
          break;
       default:
-         throw new Error("Operación no soportada");
+         obj = {
+            codigo: 404,
+            res: 4
+         }
    }
 
-   if(response.result.error) {
+   if(String(response.status).charAt(0) === "2") {
+      return {
+         value: response.result,
+         operacion: operacion,
+         error: { code: 0 }
+      }
+   }
+   else {
       return {
          operacion: operacion,
          error: {
             code: response.status === obj.codigo?obj.res:10,
             raw: response.result.error
          }
-      }
-   }
-   else {
-      return {
-         value: response.result,
-         operacion: operacion,
-         error: { code: 0 }
       }
    }
 }

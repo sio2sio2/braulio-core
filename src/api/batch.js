@@ -40,7 +40,7 @@ export default function() {
 
       if(item.then) {  // Es directamene una petición.
          id = Math.floor(Math.random()*10**15);
-         formatter = value => value;
+         formatter = value => formatear("otra", value);
       }
       else {
          const entidad = (item.grupo || item.usuario);
