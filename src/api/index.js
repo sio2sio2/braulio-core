@@ -7,12 +7,8 @@ export function testGroupsRequest(grupo) {
    }).then(response => console.log(response.body), error => console.log(error));
 }
 
-import * as usuarios from "./usuarios.js";
-import * as grupos from "./grupos.js";
-import * as miembros from "./miembros.js";
-import * as entidades from "./entidades.js";
-import * as ou from "./ou.js";
+import * as google from "./google";
 import {isID} from "./misc.js";
 import newBatch from "./batch.js";
 
-export {usuarios, grupos, miembros, ou, isID, entidades, newBatch};
+export {google, isID, newBatch};

@@ -54,7 +54,7 @@ function interfaz(client) {
    document.getElementById("lu").addEventListener("click", async function(e) {
       clearPre();
       var i = 1;
-      for await (const user of client.api.usuarios.listar({limit: 60, maxResults: 30}).iter()) {
+      for await (const user of client.api.google.usuario.listar({limit: 60, maxResults: 30}).iter()) {
          const cuenta = user.primaryEmail.slice(0, user.primaryEmail.indexOf('@')),
                ce = client.api.isID(cuenta),
                cid = client.api.isID(user.id);
@@ -69,7 +69,7 @@ function interfaz(client) {
 
    document.getElementById("lp").addEventListener("click", function(e) {
       clearPre();
-      client.api.usuarios.listar({maxResults: 100, query: "orgUnitPath=/claustro"}).get().then(users => {
+      client.api.google.usuario.listar({maxResults: 100, query: "orgUnitPath=/claustro"}).get().then(users => {
          users.forEach((user, i) => {
             appendPre(`${i}. ${user.primaryEmail} (${user.name.fullName})`);
          });
@@ -79,7 +79,7 @@ function interfaz(client) {
    document.getElementById("lg").addEventListener("click", async function(e) {
       clearPre();
       var i = 1;
-      for await (const grp of client.api.grupos.listar().iter()) {
+      for await (const grp of client.api.google.grupo.listar().iter()) {
          const cuenta = grp.email.slice(0, grp.email.indexOf('@')),
                ce = client.api.isID(cuenta),
                cid = client.api.isID(grp.id);
@@ -95,7 +95,7 @@ function interfaz(client) {
       clearPre();
       try {
          var i = 1;
-         for await (const grp of client.api.grupos.listar({userKey: "josemiguelsanchez@iescastillodeluna.es"}).iter()) {
+         for await (const grp of client.api.google.grupo.listar({userKey: "josemiguelsanchez@iescastillodeluna.es"}).iter()) {
             appendPre(i + '. ' + grp.email + ' (' + grp.description + ')');
             i++;
          }
@@ -108,7 +108,7 @@ function interfaz(client) {
 
    document.getElementById("bc").addEventListener("click", function(e) {
       clearPre();
-      client.api.grupos.listar({query: "email:BORRAR-*"}).get().then(grupos => {
+      client.api.google.grupo.listar({query: "email:BORRAR-*"}).get().then(grupos => {
          // Evitamos aposta eliminar un grupo.
          grupos = grupos.filter(gr => gr.name !== "Música" && gr.name !== "Tutores");
 
@@ -173,7 +173,7 @@ function interfaz(client) {
 
    document.getElementById("me").addEventListener("click", function(e) {
       clearPre();
-      client.api.grupos.listar({query: "email:REBORRAR-*"}).get().then(grupos => {
+      client.api.google.grupo.listar({query: "email:REBORRAR-*"}).get().then(grupos => {
          if(grupos.length === 0) {
             appendPre("No hay grupos de prueba que modificar");
             return;
@@ -199,7 +199,7 @@ function interfaz(client) {
    document.getElementById("be").addEventListener("click", async function(e) {
       clearPre();
 
-      const grupos = await client.api.grupos.listar({query: "email:REBORRAR-*"}).get();
+      const grupos = await client.api.google.grupo.listar({query: "email:REBORRAR-*"}).get();
 
       if(grupos.length === 0) {
          appendPre("No hay grupos de prueba que borrar");

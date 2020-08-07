@@ -12,7 +12,7 @@ export function isID(string) {
 
 
 /**
- * Añade el dominio en caso de que false.
+ * Añade el dominio en caso de que falte.
  */
 export function patchString(string) {
    const domain = gapi.auth2.getAuthInstance().currentUser.get().getHostedDomain();

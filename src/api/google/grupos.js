@@ -1,5 +1,5 @@
-import {patchString} from "./misc.js";
-import {listarEntidad} from "./entidades.js";
+import {patchString} from "../misc.js";
+import {listarEntidad} from "./utils.js";
 
 /**
  * Obtiene una lista de de grupos.

@@ -3,7 +3,7 @@
  * manipilar el formato de los resultados.
  */
 
-import {formatear, operar} from "./entidades.js";
+import {formatear, operar} from "./google";
 
 export default function() {
    let fresolve;

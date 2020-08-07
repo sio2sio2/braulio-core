@@ -3,7 +3,7 @@ import * as api from "./api";
 import Config from "./config";
 import * as utils from "./utils.js";
 
-function crearCliente(name, params) {
+export default function(name, params) {
    const cliente = new OAuthClient(Object.assign(params, {
                      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/admin/directory_v1/rest"],
                      scope: ("https://www.googleapis.com/auth/admin.directory.user " +
@@ -23,5 +23,3 @@ function crearCliente(name, params) {
 
    return cliente;
 }
-
-export default crearCliente;

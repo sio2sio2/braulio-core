@@ -1,6 +1,5 @@
 import {inicializar} from "./init.js";
-import * as grupos from "../api/grupos.js";
-import * as ou from "../api/ou.js";
+import * as google from "../api/google";
 
 let singleton = null;
 
@@ -253,8 +252,8 @@ function getInfo(config, deep, res) {
 
    const batch = gapi.client.newBatch();
    for(const id in res) {
-      if(res[id].id) batch.add(grupos.obtener(id), {id: id});
-      else batch.add(ou.obtener(id), {id: id});
+      if(res[id].id) batch.add(google.grupo.obtener(id), {id: id});
+      else batch.add(google.ou.obtener(id), {id: id});
    }
 
    return new Promise((resolve, reject) => {

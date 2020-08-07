@@ -1,6 +1,6 @@
 // Funciones relacionadas con la membresía.
-import {patchString} from "./misc.js";
-import {listarEntidad} from "./entidades.js";
+import {patchString} from "../misc.js";
+import {listarEntidad} from "./utils.js";
 
 /**
  * Lista todos los miemnbros de un grupo.

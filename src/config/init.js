@@ -3,9 +3,7 @@
 import DEFAULT_CONFIG from "./config.json";
 import {normalizar, generarCuentaDepartamento} from "../utils.js";
 import {patchString} from "../api/misc.js";
-import * as Grupos from "../api/grupos.js"; 
-import * as Miembros from "../api/miembros.js"; 
-import * as Ou from "../api/ou.js"; 
+import * as google from "../api/google";
 import newBatch from "../api/batch.js"; 
 
 const default_config = JSON.stringify(DEFAULT_CONFIG);
@@ -18,9 +16,9 @@ export async function inicializar() {
    const res = {},
          seed = JSON.parse(default_config),
          // {email1: grupo, email2: grupo, etc.}: Relación de grupos existentes.
-         existentes = Object.fromEntries((await Grupos.listar().get()).map(gr => [gr.email, gr])),
+         existentes = Object.fromEntries((await google.grupo.listar().get()).map(gr => [gr.email, gr])),
          // {path1: ou, path2: ou, etc.}. Relación de todas las ou existentes.
-         ous = Object.fromEntries((await Ou.listar()).result.organizationUnits.map(ou => [ou.orgUnitPath, ou]));
+         ous = Object.fromEntries((await google.ou.listar()).result.organizationUnits.map(ou => [ou.orgUnitPath, ou]));
 
    let batch = newBatch();
 
@@ -32,7 +30,7 @@ export async function inicializar() {
       catch(error) {
          ous_inexistentes[`/${ou.name}`] = ou;
       }
-      batch.add(ou.orgUnitId?Ou.actualizar(ou):Ou.crear(ou));
+      batch.add(ou.orgUnitId?google.ou.actualizar(ou):google.ou.crear(ou));
    }
 
    // Contenedores
@@ -79,7 +77,7 @@ export async function inicializar() {
    batch = newBatch();
 
    for(const dpto of seed.departamentos) {
-      batch.add(Miembros.agregar(cont.claustro.id, dpto.id));
+      batch.add(google.miembro.agregar(cont.claustro.id, dpto.id));
    }
 
    res.agregacion = await batch.end();
