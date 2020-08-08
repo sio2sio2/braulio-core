@@ -1,5 +1,4 @@
-import * as usuario from "./usuarios.js";
-import * as grupo from "./grupos.js";
+import {usuario, grupo} from "./grusers.js";
 import * as ou from "./ou.js";
 import * as miembro from "./miembros.js";
 
