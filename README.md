@@ -311,14 +311,15 @@ La inicialización podemos dividirla en tres tareas:
 
   <a name="eventos"></a>
 
-  | Evento        | Se dispara cuando....                  |
-  | ------------- | -------------------------------------- |
-  | ``succeed``   | se inicializó con éxito.               |
-  | ``failed``    | error en la inicialización.            |
-  | ``signedin``  | se produjo la autenticación.           |
-  | ``noconfig``  | no hay configuración previa.           |
-  | ``preconfig`` | se acaba de generar una conf. inicial. |
-  | ``onready``   | estamos listos para empezar,           ||
+  | Evento         | Se dispara cuando....                  |
+  | -------------- | -------------------------------------- |
+  | ``succeed``    | se inicializó con éxito.               |
+  | ``failed``     | error en la inicialización.            |
+  | ``signedin``   | se produjo la autenticación.           |
+  | ``noconfig``   | no hay configuración previa.           |
+  | ``preconfig``  | se acaba de generar una conf. inicial. |
+  |``configerror`` | no se completa correctamente la conf.  |
+  | ``onready``    | estamos listos para empezar,           |
 
   Existen, además, otros eventos no relacionados con la inicialización:
 
@@ -519,20 +520,22 @@ alguno de los nombres de grupo inutilice la aplicación. Al completarse con
 Por otra parte, el mayordomo dispone del atributo ``config`` que es un objeto
 con algunos atributos y métodos útiles:
 
-| Atributos               | Descripción                                 |
-| ----------------------- | --------------------------------------------|
-| ``config.content``      | Objeto con la configuración.                |
-| ``config.id``           | Identificador del fichero de configuración. |
-| ``config.status``       | Devuelve el estadoo: *PRECONFIG*, *READY*   |
-| ``config.set(content)`` | Guarda la nueva configuración.              |
-| ``config.remove()``     | Elimina la configuración.                   |
+| Atributos                      | Descripción                                 |
+| ------------------------------ | --------------------------------------------|
+| ``config.content``             | Objeto con la configuración.                |
+| ``config.id``                  | Identificador del fichero de configuración. |
+| ``config.status``              | Devuelve el estadoo: *PRECONFIG*, *READY*   |
+| ``config.set(content, merge)`` | Guarda la nueva configuración.              |
+| ``config.remove()``            | Elimina la configuración.                   |
 
 Es importante tener presente tres cosas:
 
 1. El objeto que debe pasarse a ``config.set()`` se usará sin modificaciones
    para dar valor a ``config.content`` y, convenientemente depurado, para
    guardarse en el *Drive*.  La depuración consistirá en eliminar nombres y
-   descripciones y dejar sólo los identificadores.
+   descripciones y dejar sólo los identificadores. El argumento ``merge`` a
+   verdadero hace que el contenido suministrado no sustitutya al actual, sino
+   que se añada a éste.
 
 1. ``config.remove()`` elimina exclusivamente el fichero de configuración, pero
    no los grupos o las unidades organizativas declaradas en tal fichero. Si se

@@ -35,16 +35,18 @@ export default function() {
     * @param {Object} item: Petición que puede ser una gapi.client.Request o
     * un objeto de los que acepta la función "operar".
     */
-   p.add = function(item) {
+   p.add = function(item, params) {
       let id, formatter;
 
+      params = params || {};
+
       if(item.then) {  // Es directamene una petición.
-         id = Math.floor(Math.random()*10**15);
+         id = params.id || Math.floor(Math.random()*10**15);
          formatter = value => formatear("otra", value);
       }
       else {
          const entidad = (item.grupo || item.usuario);
-         id = typeof entidad === "string"?entidad:(entidad.email || entidad.id);
+         id = params.id || (typeof entidad === "string")?entidad:(entidad.email || entidad.id);
 
          item = operar(item);
          formatter = value => formatear(item.operacion, value);

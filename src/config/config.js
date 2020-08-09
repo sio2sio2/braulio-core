@@ -1,5 +1,6 @@
 import {inicializar} from "./init.js";
 import * as google from "../api/google";
+import {merge} from "../utils.js";
 
 let singleton = null;
 
@@ -120,9 +121,13 @@ Config.prototype.init = function() {
  *    Si el contenido es nulo, se desencadena se genera el fichero
  *    a partir de la semilla y se dispara "preconfig". De lo contrario,
  *    se guarda y se desencadena "saveconfig".
+ *
+ * @param {Boolean} merge: Si se mezcla el contenido proporcionado en el primer
+ *    parámetro con el actual, en vez de sustyituirse.
  */
-Config.prototype.set = function(content) {
+Config.prototype.set = function(content, merge) {
    if(this.id === null) throw new Error("Configuración no inicializada");
+   if(merge) content = merge({}, this.content, content);
 
    if(content) {
       gapi.client.request({

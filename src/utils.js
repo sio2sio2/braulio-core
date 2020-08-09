@@ -96,3 +96,26 @@ export function generarCuentaGrupo(nombre, alumnos) {
    if(adultos) cuenta = cuenta(0,4) + "a" + cuenta(4);
    return `{prefijo}-{cuenta.toLowerCase()}`;
 }
+
+
+export function isObject(variable) {
+   return typeof variable === "object" && variable !== null && !Array.isArray(variable);
+}
+
+/**
+ * Mezcla de forma recursiva dos o más objetos.
+ */
+export function merge(target, ...sources) {
+   if(sources.length === 0) return target;
+   const source = sources.shift();
+
+   if(!isObject(source) || !isObject(target)) return source;
+   else {
+      for(const [key, value] of Object.entries(source)) {
+         if(target.hasOwnProperty(key)) target[key] = merge(target[key], value);
+         else target[key] = value;
+      }
+   }
+   
+   return merge(target, ...sources);
+}

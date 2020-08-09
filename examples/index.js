@@ -121,13 +121,13 @@ function interfaz(client) {
 
          const batch = gapi.client.newBatch();
          for(const grupo of grupos) {
-            batch.add(client.api.grupos.borrar(grupo.email), {id: grupo.email});
+            batch.add(client.api.google.grupo.borrar(grupo.email), {id: grupo.email});
          }
 
          const config = client.config.content;
          for(const ou of Object.values(config.ou || {})) {
             if(!ou.orgUnitId) continue;
-            batch.add(client.api.ou.borrar(ou.orgUnitId), {id: ou.orgUnitPath});
+            batch.add(client.api.google.ou.borrar(ou.orgUnitId), {id: ou.orgUnitPath});
          }
 
          batch.then(response => {

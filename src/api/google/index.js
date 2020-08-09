@@ -104,7 +104,7 @@ export function formatear(operacion, response) {
       return {
          operacion: operacion,
          error: {
-            code: response.status === obj.codigo?obj.res:10,
+            code: response.status === obj.codigo?obj.res:response.status,
             raw: response.result.error
          }
       }
