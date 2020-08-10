@@ -53,9 +53,12 @@ function listar(tipo, args) {
       'maxResults': tipo === "users"?500:200,
    }, args)
 
-   // Cuando se piden los grupos a los que pertenece
-   // un usuarios, no puede inclurse customer.
-   if(tipo === "groups" && args.userKey) delete args.customer;
+   if(tipo === "groups" && args.userKey) {
+      // Cuando se piden los grupos a los que pertenece
+      // un usuarios, no puede inclurse customer.
+      delete args.customer;
+      args.userKey = patchString(args.userKey);
+   }
 
    const query_params = {
       path: `https://www.googleapis.com/admin/directory/v1/${tipo}`,

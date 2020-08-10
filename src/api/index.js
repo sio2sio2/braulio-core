@@ -10,7 +10,6 @@ export function testGroupsRequest(grupo) {
 import * as google from "./google";
 import {isID} from "./misc.js";
 import newBatch from "./batch.js";
-import {listar as listarProfesor} from "./profesor.js";
+import * as profesor from "./profesor.js";
 
-export {google, isID, newBatch};
-export {listarProfesor};
+export {google, isID, newBatch, profesor};

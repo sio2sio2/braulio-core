@@ -69,7 +69,7 @@ function interfaz(client) {
 
    document.getElementById("lp").addEventListener("click", function(e) {
       clearPre();
-      client.api.google.usuario.listar({maxResults: 100, query: "orgUnitPath=/claustro"}).get().then(users => {
+      client.api.profesor.listar().get().then(users => {
          users.forEach((user, i) => {
             appendPre(`${i}. ${user.primaryEmail} (${user.name.fullName})`);
          });
@@ -95,13 +95,13 @@ function interfaz(client) {
       clearPre();
       try {
          var i = 1;
-         for await (const grp of client.api.google.grupo.listar({userKey: "josemiguelsanchez@iescastillodeluna.es"}).iter()) {
+         for await (const grp of client.api.profesor.grupos("josemiguelsanchez").iter()) {
             appendPre(i + '. ' + grp.email + ' (' + grp.description + ')');
             i++;
          }
       }
       catch(error) {
-         console.log(error.body);
+         console.log(error);
       }
    });
 
