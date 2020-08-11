@@ -554,9 +554,9 @@ objeto ``mayordomo.api``
 Para llevar a cabo varias acciones en serie (p.e. dar de alta una lista de
 profesores) es conveniente usar:
 
-| Clase      | Descripción                                         |
-| ---------- | --------------------------------------------------- |
-| ``Batch``  | Sirve para procesar en conjunto varias peticiones.  |
+| Clase      | Descripción                                  |
+| ---------- | -------------------------------------------- |
+| ``Batch``  | Procesar en conjunto de varias peticiones.   |
 
 Para comenzar el procesamiento de varias peticiones debe crearse un objeto:
 
@@ -566,15 +566,15 @@ const batch = new mayordomo.api.Batch();
 
 ~~~
 
-El objeto dispone de algunos métodos:
+El objeto es un *Thenable* que dispone de algunos métodos:
 
 | Métodos               | Descripción                                    |
 | --------------------- | ---------------------------------------------- |
 | ``add(item, params)`` | Añade una petición al procesamiento.           |
-| ``end()``             | Método asíncrono que pone fin al procsamiento. |
+| ``then(callback)``    | Método típo de los objetos *thenables*.        |
 
-El método ``add()`` permite añadir una petición más al procesamiento, para lo
-cual es necesario facilitar dos argumentos: el segundo sirve únicamente para
+El método ``add()`` permite añadir una nueva petición al procesamiento, para lo
+cual es necesario proporcionar dos argumentos: el segundo sirve únicamente para
 facilitar un identificador a la petición, mientras que el primero puede adoptar
 dos formas:
 
@@ -588,7 +588,7 @@ dos formas:
 
    En este caso, si no se facilita el identificador, se generará uno aleatorio.
 
-1. Un objeto como el pasado al método operar:
+1. Un objeto como el pasado al método ``operar``:
 
    ~~~javascript
 
@@ -597,37 +597,37 @@ dos formas:
    ~~~
 
    En el ejemplo, el objeto determina que se quiera borrar el usuario de cuenta
-   *profesor1* y se utilizá com indetificador la dirección de la propia cuenta.
-   Podríase, no obstante, definir un indentificador distinto utilizando el
+   *profesor1* y se utilizá con identificador la dirección de la propia cuenta.
+   Podríase, no obstante, definir un identificador distinto utilizando el
    segundo argumento, como se hizo en el caso anterior.
 
 Cuando se han añadido todas las peticiones que se quieren llevar a cabo en
 bloque, hay dos alternativas para recuperar los resultados de tales peticiones:
 
-1. Mediante el método ``end()``, que es un método asíncrono por lo que puede
-   usarse, así:
+1. Haciendo uso de la interfaz *Thenable* que presenta el objeto, o sea, así:
 
    ~~~javascript
 
-      batch.end().then(resultados => {
+      batch.then(resultados => {
          console.log(resultados);
       });
 
    ~~~
 
-   o, si estamos a su vez dentro de una función asíncrona:
+   o, si estamos dentro de una función asíncrona:
 
    ~~~javascript
 
       const resultados = await batch.end();
+      console.log(resultados);
 
    ~~~
 
    El objeto *resultados* estará disponible sólo cuando se hayan completado
    todas las peticiones que componen el procesamiento. Las claves de este objeto
    de resultados son los identificadores de cada petición y los valores un
-   objeto que describe indivudlamente el resultado de la petición
-   correspondiente. Más adelante, describiremos este objeto.
+   objeto que describe individualmente el resultado de la petición
+   correspondiente. Más adelante, describiremos dicho objeto.
 
 
 1. Utiliando el objeto como un iterador asíncrono:
@@ -641,8 +641,9 @@ bloque, hay dos alternativas para recuperar los resultados de tales peticiones:
    ~~~
 
    La diferencia fundamental con respecto al método anterior, más allá de la
-   formal, es que se irán obteniendo los resultados vayan estando disponibles,
-   en vez de tener que esperar a que se completen todas las peticiones.
+   formal, es que se irán obteniendo los resultados según vayan estando
+   disponibles, en vez de tener que esperar a que se completen todas las
+   peticiones.
 
 El objeto de resultado para cada petición tiene la  siguiente forma:
 
@@ -660,8 +661,8 @@ El objeto de resultado para cada petición tiene la  siguiente forma:
 ~~~
 
 aunque *value* sólo estará disponible cuando la petición haya tenido éxito
-(salvo al borrar en cuyo caso el valor es *false*), y *error*, cuando este no
+(salvo al borrar en cuyo caso el valor es *false*); y *error*, cuando este no
 haya tenido lugar, tendrá código *0* y no dispondrá del atributo *raw*.
 
-En ambos casos, podremos volver a consultar los resultados, pero seremos incapaces
-de añadir nuevas peticiones a través del objeto `add()`.
+Accedamos como accedamos a los resultados, podremos volver a consultar éstos,
+pero seremos incapaces de añadir nuevas peticiones a través del objeto `add()`.

@@ -185,7 +185,7 @@ function interfaz(client) {
             batch.add({grupo: grupo});
          });
 
-         batch.end().then(response => {
+         batch.then(response => {
             appendPre("Grupos a los que se les ha modificado la descripción:\n");
             let i=0;
             for(const [email, result] of Object.entries(response)) {
@@ -211,7 +211,7 @@ function interfaz(client) {
 
       appendPre("Borrando los grupos de prueba... ");
 
-      const response = await batch.end();
+      const response = await batch;
       let i=0;
       for(const [email, result] of Object.entries(response)) {
          i++;

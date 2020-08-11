@@ -131,7 +131,7 @@ export async function inicializar() {
       batch.add(google.miembro.agregar(seed.contenedores.claustro.id, dpto.id));
    }
 
-   await batch.end();
+   await batch;
 
    console.log("DEBUG", nocreados, seed);
 

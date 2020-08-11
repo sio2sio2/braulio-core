@@ -34,9 +34,34 @@ function procesarItem(item, params) {
 
 
 /**
- * Compone un iterador para poder ir obteniendo progresivamente
- * lps resultados de las peticiones con que se alimenta.
- * Los resultados se formatean utilizando la función formatear.
+ * Clase para procesar un conjunto de peticiones a la API de G-Suite.
+ * El objeto permite ir añadiendo una a una las peticiones y se asegura
+ * de que todas están acabadas. Presenta una interfaz Thenable e implementa,
+ * además un iterador asíncrono:
+ *
+ *    const batch = new Batch();
+ *    batch.add(req1, {id: "req1"});
+ *    batch.add(req2, {id: "req2"});
+ *    batch.add(req3, {id: "req3});
+ * 
+ * Una vez añadidas todas las peticiones que forman el lote, tenemos estas
+ * tres alternativas para obtener los resultados:
+ *
+ * 1. Iterador asíncrono:
+ *
+ *    for await(const [id, result] of batch) {
+ *       console.log(`ID: ${id} -- RESULT:`, result);
+ *    }
+ *
+ * 2. Objeto Thenable con then:
+ *
+ *    batch.then(resp => console.log(resp));
+ *
+ * 3. Objeto Thenable con await (habrá que estar dentro de una función asíncrona):
+ *
+ *    const resp = await batch;
+ *    console.log(resp);
+ *
  */
 function Batch() {
    Object.defineProperties(this, {
@@ -80,11 +105,11 @@ Batch.prototype[Symbol.asyncIterator] = async function*() {
 }
 
 
-Batch.prototype.end = async function() {
+Batch.prototype.then = async function(callback) {
    const res = [];
    this._done = true;
    for await(const r of this) res.push(r);
-   return Object.fromEntries(res);
+   return callback(Object.fromEntries(res));
 }
 
 export default Batch;
