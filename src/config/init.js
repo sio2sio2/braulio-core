@@ -4,7 +4,7 @@ import DEFAULT_CONFIG from "./config.json";
 import {normalizar, generarCuentaDepartamento} from "../utils.js";
 import {patchString} from "../api/misc.js";
 import * as google from "../api/google";
-import newBatch from "../api/batch.js"; 
+import Batch from "../api/batch.js"; 
 
 const default_config = JSON.stringify(DEFAULT_CONFIG);
 
@@ -22,7 +22,7 @@ export async function inicializar() {
 
    // Intenta averiguar los IDs existentes y crea los grupos y ou inexistentes.
    async function vuelta(seed) {
-      const batch = newBatch();
+      const batch = new Batch();
 
       // Unidades organizativas: apuntamos IDs o las marcamos como inexistentes.
       const ous_inexistentes = {};
@@ -61,11 +61,10 @@ export async function inicializar() {
          batch.add({grupo: dpto});
       }
 
-      const creacion = await batch.end(),
-            nocreados = {};
+      const nocreados = {};
 
-      // Apunta los identificadores de los grupos y ou recientemente creados.
-      for(const [key, result] of Object.entries(creacion)) {
+      // Apunta los identificadores de grupos y ous recientemente creados.
+      for await(const [key, result] of batch) {
          // Ha habido un error en la creación del ou o el grupo.
          // Se apuntan tales errores para volver a intentarlo.
          if(!result.value) {
@@ -122,7 +121,7 @@ export async function inicializar() {
       if(cuantos_prev === cuantos_post) contador++;
    } while(cuantos_post > 0 && contador < 3 && await wait());
 
-   const batch = newBatch();
+   const batch = new Batch();
 
    for(const dpto of seed.departamentos) {
       if(!dpto.id) {

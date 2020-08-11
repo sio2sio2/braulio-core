@@ -501,7 +501,7 @@ alguno de los nombres de grupo inutilice la aplicación. Al completarse con
 
   mayordomo.on("preconfig", function(e) {
       // En este punto ya se ha generado el fichero predefinido y podemos
-      // habilitar algún mecanismo para que el usuario lo altere.
+      // habilitar algún mecanismo interactivo para que el usuario lo altere.
       // Después de los cambios, lo lógico es que nosotros mismo forcemos
       // el evento "onready":
 
@@ -544,4 +544,124 @@ Es importante tener presente tres cosas:
 1. Una configuración completa tendrá estado *READY*; mientras que una
    configuración que se está áun generando tendrá estado *PRECONFIG*.
 
-### API de manipulación de G-Suite
+### API de manipulación
+
+Los métodos de manipulación de las cuentas de G-Suite se encuentra dentro del
+objeto ``mayordomo.api``
+
+#### Procesamiento por lotes
+
+Para llevar a cabo varias acciones en serie (p.e. dar de alta una lista de
+profesores) es conveniente usar:
+
+| Clase      | Descripción                                         |
+| ---------- | --------------------------------------------------- |
+| ``Batch``  | Sirve para procesar en conjunto varias peticiones.  |
+
+Para comenzar el procesamiento de varias peticiones debe crearse un objeto:
+
+~~~javascript
+
+const batch = new mayordomo.api.Batch();
+
+~~~
+
+El objeto dispone de algunos métodos:
+
+| Métodos               | Descripción                                    |
+| --------------------- | ---------------------------------------------- |
+| ``add(item, params)`` | Añade una petición al procesamiento.           |
+| ``end()``             | Método asíncrono que pone fin al procsamiento. |
+
+El método ``add()`` permite añadir una petición más al procesamiento, para lo
+cual es necesario facilitar dos argumentos: el segundo sirve únicamente para
+facilitar un identificador a la petición, mientras que el primero puede adoptar
+dos formas:
+
+1. Un objeto ``gapi.client.Request``:
+
+   ~~~javascript
+
+      batch.add(mayordomo.api.profesor.borrar("profesor1"), {id: "profesor1"});
+
+   ~~~
+
+   En este caso, si no se facilita el identificador, se generará uno aleatorio.
+
+1. Un objeto como el pasado al método operar:
+
+   ~~~javascript
+
+      batch.add({usuario: "profesor1"});
+
+   ~~~
+
+   En el ejemplo, el objeto determina que se quiera borrar el usuario de cuenta
+   *profesor1* y se utilizá com indetificador la dirección de la propia cuenta.
+   Podríase, no obstante, definir un indentificador distinto utilizando el
+   segundo argumento, como se hizo en el caso anterior.
+
+Cuando se han añadido todas las peticiones que se quieren llevar a cabo en
+bloque, hay dos alternativas para recuperar los resultados de tales peticiones:
+
+1. Mediante el método ``end()``, que es un método asíncrono por lo que puede
+   usarse, así:
+
+   ~~~javascript
+
+      batch.end().then(resultados => {
+         console.log(resultados);
+      });
+
+   ~~~
+
+   o, si estamos a su vez dentro de una función asíncrona:
+
+   ~~~javascript
+
+      const resultados = await batch.end();
+
+   ~~~
+
+   El objeto *resultados* estará disponible sólo cuando se hayan completado
+   todas las peticiones que componen el procesamiento. Las claves de este objeto
+   de resultados son los identificadores de cada petición y los valores un
+   objeto que describe indivudlamente el resultado de la petición
+   correspondiente. Más adelante, describiremos este objeto.
+
+
+1. Utiliando el objeto como un iterador asíncrono:
+
+   ~~~javascript
+
+      for await (const [id, resultado] of batch) {
+         console.log(`ID: ${id} -- RES: ${resultado}`);
+      }
+
+   ~~~
+
+   La diferencia fundamental con respecto al método anterior, más allá de la
+   formal, es que se irán obteniendo los resultados vayan estando disponibles,
+   en vez de tener que esperar a que se completen todas las peticiones.
+
+El objeto de resultado para cada petición tiene la  siguiente forma:
+
+~~~javascript
+
+{
+   value: { usuario o grupo },
+   operacion: "actualizar", // o "crear" o "borrar".
+   error: {
+      code: CODIGO_NUMERICO,
+      raw: { objeto de error proporcionado por google }
+   }
+}
+
+~~~
+
+aunque *value* sólo estará disponible cuando la petición haya tenido éxito
+(salvo al borrar en cuyo caso el valor es *false*), y *error*, cuando este no
+haya tenido lugar, tendrá código *0* y no dispondrá del atributo *raw*.
+
+En ambos casos, podremos volver a consultar los resultados, pero seremos incapaces
+de añadir nuevas peticiones a través del objeto `add()`.

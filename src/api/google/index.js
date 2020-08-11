@@ -57,7 +57,7 @@ export function operar(entidad) {
  *
  * @returns {Object}: Devuelve un objeto con el resultado de la operación.
  *    
- *       {entity: {...}, error: {code: codigo, raw: error}}
+ *       {value: {...}, error: {code: codigo, raw: error}}
  *
  *    donde entity es la entidad creada o modificada (será undefined, si no tuvo éxito);
  *    code: el código o estado que devuelve la gapi al realizar la operación.

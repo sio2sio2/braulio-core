@@ -160,12 +160,12 @@ function interfaz(client) {
          }
       ]
 
-      const batch = client.api.newBatch();
+      const batch = new client.api.Batch();
       grupos.forEach(gr => batch.add({grupo: gr}));
 
       appendPre("Grupos creados::\n");
       let i=0;
-      for(const [email, result] of Object.entries(await batch.end())) {
+      for await(const [email, result] of batch) {
          i++;
          appendPre(`${i}. ${email}: ${result.error.code === 0?"OK":"Fallo"}`);
       }
@@ -179,13 +179,13 @@ function interfaz(client) {
             return;
          }
 
-         const batch = client.api.newBatch();
+         const batch = new client.api.Batch();
          grupos.forEach(gr => {
             const grupo = {id: gr.id, description: `${gr.description}. Modificado`};
             batch.add({grupo: grupo});
          });
 
-         batch.then(response => {
+         batch.end().then(response => {
             appendPre("Grupos a los que se les ha modificado la descripción:\n");
             let i=0;
             for(const [email, result] of Object.entries(response)) {
@@ -206,7 +206,7 @@ function interfaz(client) {
          return;
       }
 
-      const batch = client.api.newBatch();
+      const batch = new client.api.Batch();
       grupos.forEach(gr => batch.add({grupo: gr.email}));
 
       appendPre("Borrando los grupos de prueba... ");

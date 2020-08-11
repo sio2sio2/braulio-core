@@ -38,7 +38,7 @@ export function actualizar(ou) {
 
    return gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits/${id}`,
-      method: "PUY",
+      method: "PUT",
       body: ou
    });
 }
