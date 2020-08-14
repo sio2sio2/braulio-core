@@ -23,19 +23,20 @@ export function listarEntidad(args, listattr, limit) {
 
    args.params.maxResults = Math.min(limit || args.params.maxResults, args.params.maxResults);
 
+   // Iterador asíncrono. Si se han de hacer varias consultas para
+   // obtener la lista completa, va devolviendo loss resultados de las
+   // consultas y no espera a hacerlas todas.
    async function* iter() {
       const iargs = Object.assign({}, args);
       let   ilimit = limit;
       iargs.params = Object.assign({}, args.params);
 
       do {
-         var buffer = await new Promise((resolve, reject) => {
-            gapi.client.request(iargs).then(function(response) {
-               iargs.params.pageToken = response.result.nextPageToken;
-               resolve(getAttr(response, listattr));
-            }, error => reject(error));
-         });
-         
+         const response = await gapi.client.request(iargs),
+               buffer = getAttr(response, listattr);
+
+         iargs.params.pageToken = response.result.nextPageToken;
+
          while(buffer && buffer.length) yield buffer.shift();
          if(ilimit) ilimit -= iargs.params.maxResults;
 
@@ -43,16 +44,14 @@ export function listarEntidad(args, listattr, limit) {
    }
 
    return {
-      iter: iter,  // Itera sobre cada usuario.
-      get: function() {  // Devuelve una promesa con la lista completa.
-        return new Promise(async (resolve, reject) => {
+      [Symbol.asyncIterator]: iter,
+      then: async function(callback, fallback) {
             const lista = [];
             try {
                for await (const user of iter()) lista.push(user);
             }
-            catch(error) { reject(error); }
-            resolve(lista);
-         });
+            catch(error) { fallback(error); }
+            callback(lista);
       }
    }
 }

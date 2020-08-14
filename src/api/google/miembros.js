@@ -76,6 +76,7 @@ export function agregar(grupo, miembro) {
 }
 
 
+// TODO: ¿Esto sirve de algo?
 /**
  * Elimina todos los miembros de un grupo
  *
@@ -89,7 +90,7 @@ export function vaciar(grupo) {
    return new Promise((resolve, reject) => {
       grupo = patchString(grupo);
 
-      listar(grupo).get(),then(miembros => {
+      listar(grupo).then(miembros => {
          const batch = gapi.client.newBatch();
 
          for(const m of miembros) batch.add(borrar(grupo, m.email));
