@@ -218,6 +218,35 @@ function interfaz(client) {
          appendPre(`${i}. ${email}: ${result.error.code === 0?"OK":"Fallo"}`);
       }
    });
+
+   document.getElementById("cp"). addEventListener("click", async function(e) {
+      const profesor = {
+         primaryEmail: "borrar-soyprofesor",
+         name: {
+            givenName: "Profesor",
+            familyName: "Aburridamente Inteligente",
+            fullName: "Profesor Aburridamente Inteligente"
+         },
+         puesto: "11590006"
+      }
+
+      clearPre();
+
+      //client.api.profesor.crear(profesor).then(response => console.log(response));
+      const response = await client.api.profesor.crear(profesor);
+      console.log("DEBUG", response);
+
+   });
+
+   document.getElementById("bp"). addEventListener("click", function(e) {
+      const profesor = "borrar-soyprofesor";
+
+      clearPre();
+      appendPre("Borrando profesor:");
+      client.api.profesor.borrar(profesor)
+         .then(response => appendPre(`${profesor}: OK`),
+               error => appendPre(`${profesor}: Falló`));
+   });
 }
 
 window.onload = function(e) {

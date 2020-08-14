@@ -84,8 +84,10 @@ function obtener(tipo, id) {
 
 
 function crear(tipo, info) {
-   const domain = gapi.auth2.getAuthInstance().currentUser.get().getHostedDomain();
-   if(info.email && !info.email.includes('@')) info.email = `${info.email}@${domain}`;
+   const emailField = tipo === "users"?"primaryEmail":"email";
+
+   if(info[emailField]) info[emailField] = patchString(info[emailField]);
+
    return gapi.client.request({
             path: `https://www.googleapis.com/admin/directory/v1/${tipo}`,
             method: "POST",
@@ -95,17 +97,18 @@ function crear(tipo, info) {
 
 
 function actualizar(tipo, info) {
+   const emailField = tipo === "users"?"primaryEmail":"email";
    let id;
    info = Object.assign({}, info);
 
-   if(info.email) info.email = patchString(info.email);
+   if(info[emailField]) info[emailField] = patchString(info[emailField]);
    if(info.id) {
       id = info.id;
       delete info.id;
    }
-   else if(info.email) {
-      id = info.email;
-      delete info.email;
+   else if(info[emailField]) {
+      id = info[emailField];
+      delete info[emailField];
    }
 
    return gapi.client.request({

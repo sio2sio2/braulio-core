@@ -33,7 +33,7 @@ export function grupos(profesor) {
 export function obtenerDepartamento(puesto) {
    const config = new Config().content;
    for(const dpto of config.departamentos) {
-      for(const exp of dpto.puestos) {
+      for(let exp of dpto.puestos) {
          if(exp.startsWith("/")) {  // Expresión regular
             exp = exp.slice(1, -1);
             if(!exp.startsWith("^")) exp = "^" + exp;
@@ -47,23 +47,48 @@ export function obtenerDepartamento(puesto) {
 }
 
 /**
- * Crea un nuevo profesor.
+ * Crea un nuevo profesor, lo cual implica:
  *
- * @param {Object} profesor: Objeto que describe el profesor. Debe incluir también
- * el atributo "puesto" para conocer en qué departamento hay que incluir al profesor.
+ * + Crear el usuario.
+ * + Añadirlo a su departamento correspondiente.
+ *
+ * La función se comporta como una gapi.client.Request, por lo que devuelve un
+ * objeto thenable, que sólo llevará a cabo de forma efectiva la operación
+ * cuando se use la propia operacion then (o se use await). La función de callback
+ * recibirá como argumento el resultado de crear el profesor (no de agragarlo
+ * al departamento) y la de callback, el fallo al intentar crearlo
+ *
+ * @param {Object} profesor: Objeto que describe el profesor. Debe incluir
+ *    también el atributo "puesto" para conocer en qué departamento hay que
+ * incluir al profesor.
  */
-export async function crear(profesor) {
-   // TODO: Falta comprobar si es tutor.
-   if(!profesor.puesto) new Error(`${profesor.email} carece de puesto de desempeño`);
+export function crear(profesor) {
+   if(!profesor.puesto) throw new Error(`'${profesor.primaryEmail}' carece de
+   puesto de desempeño`);
    
-   const dpto = obtenerDepartamento(profesor.puesto);
-   profesor = Object.assign({}, profesor);
+   const config = new Config().content,
+         dpto = obtenerDepartamento(profesor.puesto);
+
+   // TODO: Falta información sobre tutoría.
+   profesor = Object.assign({
+      password: "12341234",
+      orgUnitPath: config.ou.claustro.orgUnitPath,
+      changePasswordAtNextLogin: true,
+      keywords: [{
+         type: "mission",
+         value: profesor.puesto
+      }]
+   }, profesor);
+
    delete profesor.puesto;
 
-   profesor = await google.usuario.crear(profesor);
-   await google.miembro.agregar(dpto, profesor.id);
-
-   return profesor;
+   return {
+      then: (callback, fallback) => {
+         google.usuario.crear(profesor)
+            .then(response => google.miembro.agregar(dpto, response.result.id).then(r => callback(response)),
+                  error => fallback(error));
+      }
+   }
 }
 
 
@@ -74,4 +99,72 @@ export async function crear(profesor) {
  */
 export function borrar(profesor) {
    return google.usuario.borrar(profesor);
+}
+
+
+/**
+ * Obtiene una cuenta de profesor
+ *
+ * @param {String} profesor: Identificador o dirección de correo del profesor
+ */
+export function obtener(profesor) {
+   return google.usuario.obtener(profesor);
+}
+
+
+
+function buscarKeyword(clave, profesor) {
+   if(!profesor.keywords) return null;
+
+   for(const kw of profesor.keywords) {
+      if(kw.type === clave || kw.customType === "clave") return kw;
+   }
+
+   return undefined;
+}
+
+
+export function actualizar(profesor) {
+   const puesto = profesor.puesto;
+   delete profesor.puesto;
+
+   return {
+      then: (callback, fallback) => {
+         if(puesto) {
+            const kw = buscarKeyword("mission", profesor);
+            if(kw === null) {
+               google.usuario.obtener(profesor.id || profesor.primaryEmail)
+                  .then(response => {
+                           const kw = buscarKeyword("mission", profesor);
+                           switch(kw) {
+                              case null:
+                                 kw = [];
+                              case undefined:
+                                 kw.push({type: "mission", value: puesto});
+                                 profesor.keywords = kw;
+                                 break;
+                              defailt:
+                                 kw.value = puesto;
+                           }
+                           google.usuario.actualizar(profesor)
+                              .then(response => callback(response),
+                                    error => fallback(error));
+                        },
+                        error => { throw new Error("Profesor inexistente"); });
+            }
+            else {
+               if(kw) kw.value = puesto
+               else kw.push({type: "mission", value: puesto});
+               google.usuario.actualizar(profesor)
+                  .then(response => callback(response),
+                        error => fallback(error));
+            }
+         }
+         else {
+            google.usuario.actualizar(profesor)
+               .then(response => callback(response),
+                     error => fallback(error));
+         }
+      }
+   }
 }
