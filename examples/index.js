@@ -233,10 +233,35 @@ function interfaz(client) {
 
       clearPre();
 
-      //client.api.profesor.crear(profesor).then(response => console.log(response));
-      const response = await client.api.profesor.crear(profesor);
-      console.log("DEBUG", response);
+      appendPre("Creación de un profesor:")
+      try {
+         const response = await client.api.profesor.crear(profesor);
+         console.log("DEBUG", response);
+         appendPre(`${response.result.primaryEmail}: OK`);
+      }
+      catch(error) {
+         console.error("DEBUG", error);
+         appendPre(`${profesor.primaryEmail}: Falló`);
+      }
 
+   });
+
+   document.getElementById("mp"). addEventListener("click", async function(e) {
+      const profesor = {
+         primaryEmail: "borrar-soyprofesor",
+         puesto: "00590008"
+      }
+
+      clearPre();
+      appendPre("Modificación del profesor");
+      client.api.profesor.actualizar(profesor)
+         .then(response => {
+            console.log("DEBUG", response);
+            appendPre(`${response.result.primaryEmail}: OK`);
+         }, error => {
+            console.error("DEBUG", error);
+            appendPre(`${profesor.primaryEmail}: Falló`);
+         });
    });
 
    document.getElementById("bp"). addEventListener("click", function(e) {

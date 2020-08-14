@@ -50,8 +50,8 @@ export function listarEntidad(args, listattr, limit) {
             try {
                for await (const user of iter()) lista.push(user);
             }
-            catch(error) { fallback(error); }
-            callback(lista);
+            catch(error) { return fallback(error); }
+            return callback(lista);
       }
    }
 }
