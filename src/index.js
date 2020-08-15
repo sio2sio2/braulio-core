@@ -10,7 +10,8 @@ export default function(name, params) {
                              "https://www.googleapis.com/auth/admin.directory.group " +
                              "https://www.googleapis.com/auth/apps.groups.settings " +
                              "https://www.googleapis.com/auth/drive.appdata " +
-                             "https://www.googleapis.com/auth/admin.directory.orgunit")
+                             "https://www.googleapis.com/auth/admin.directory.orgunit " +
+                             "https://www.googleapis.com/auth/admin.directory.userschema")
                    }));
 
    const config = cliente.config = new Config(cliente, name);

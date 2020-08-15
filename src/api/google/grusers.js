@@ -74,11 +74,12 @@ function listar(tipo, args) {
  *
  * @param {String{ usuario: La dirección o el identificador del usuario.
  */
-function obtener(tipo, id) {
+function obtener(tipo, id, params) {
    id = patchString(id);
    return gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/${tipo}/${id}`,
-      method: "GET"
+      method: "GET",
+      params: params || {}
    });
 }
 
@@ -132,9 +133,10 @@ function borrar(tipo, id) {
           });
 }
 
+
 const usuario = {
    listar: args => listar("users", args),
-   obtener: id => obtener("users", id),
+   obtener: (id, params) => obtener("users", id, params),
    borrar: id => borrar("users", id),
    crear: info => crear("users", info),
    actualizar: info => actualizar("users", info)

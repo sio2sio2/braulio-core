@@ -1,8 +1,9 @@
 import {usuario, grupo} from "./grusers.js";
 import * as ou from "./ou.js";
 import * as miembro from "./miembros.js";
+import * as esquema from "./esquemas.js";
 
-export {usuario, grupo, ou, miembro}
+export {usuario, grupo, ou, miembro, esquema}
 
 /**
  * Crea o actualiza el grupo o usuario que se proporciona.

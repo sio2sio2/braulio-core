@@ -5,6 +5,28 @@ function interfaz(client) {
       });
 
       window.CLIENTE = client;
+
+      // PRUEBAS.
+      window.crearEsquema = function() {
+         client.api.google.esquema.crear({
+            displayName: "Mi primera esquema de profesor",
+            schemaName: "profesor",
+            fields: [
+               {
+                  fieldName: "puesto",
+                  fieldType: "STRING"
+               },
+               {
+                  fieldName: "tutoria",
+                  fieldType: "EMAIL", // Dirección de email del grupo del que es tutor.
+               },
+               {
+                  fieldName: "cese",
+                  fieldType: "DATE"
+               }
+            ]
+         }).then(resp => console.log(resp));
+      }
    });
 
    client.on("failed", function(e) {
@@ -261,6 +283,21 @@ function interfaz(client) {
          }, error => {
             console.error("DEBUG", error);
             appendPre(`${profesor.primaryEmail}: Falló`);
+         });
+   });
+
+   document.getElementById("zp").addEventListener("click", function(e) {
+      const profesor = "borrar-soyprofesor";
+
+      clearPre();
+      appendPre("Cesando profesor:");
+      client.api.profesor.cesar(profesor)
+         .then(response => {
+            console.log("DEBUG", response);
+            appendPre(`${profesor}: OK`);
+         }, error => {
+            console.error("DEBUG", error);
+            appendPre(`${profesor}: Falló`);
          });
    });
 

@@ -1,15 +1,16 @@
 import Config from "../config";
 import * as google from "./google";
-import {merge} from "../utils";
+import {patchString, fallback as fallback_default} from "./misc.js";
+import Batch from "./batch.js";
 
-/**
- * Métodos asociados a la manipulación de profesores.
- */
-export function listar() {
+//  Métodos asociados a la manipulación de profesores.
+
+export function listar(args) {
    const config = new Config().content;
    const path = config.contenedores.claustro.orgUnitPath || `/${config.contenedores.claustro.name}`
 
-   return google.usuario.listar({query: `orgUnitPath=${path}`});
+   args = Object.assign({query: `orgUnitPath=${path}`}, args);
+   return google.usuario.listar(args);
 }
 
 
@@ -59,34 +60,42 @@ export function borrar(profesor) {
 
 
 /**
- * Obtiene una cuenta de profesor
+ * Obtiene la información sobre un profesor.
  *
  * @param {String} profesor: Identificador o dirección de correo del profesor
  */
 export function obtener(profesor) {
-   return google.usuario.obtener(profesor);
+   //TODO: La máscara debe obtenerse de la configuración.
+   return google.usuario.obtener(profesor, {projection: "custom", customFieldMask: "profesor"});
 }
 
 
+// Buscan campos en los esquemas.
+function obtenerValor(clave, profesor) {
+   const [schema, key] = clave.split(".");
 
-function buscarKeyword(clave, profesor) {
-   if(!profesor.keywords) return null;
+   if(!profesor.customSchemas) return null;
 
-   for(const kw of profesor.keywords) {
-      if(kw.type === clave || kw.customType === "clave") return kw;
+   try {
+      return profesor.customSchemas[schema][key];
    }
-
-   return undefined;
+   catch(error) { 
+      return undefined; 
+   }
 }
 
 
-function mergeKeywords(target, ...sources) {
+function mergeSchemas(target, ...sources) {
 
-   function toObject(arr) {
-      return Object.fromEntries((arr || []).map(e => [e.type === "custom"?e.customType:e.type, e]));
+   const schemas = {};
+   for(const obj of [target, ...sources]) {
+      for(const [key, fields] of Object.entries(obj || {})) {
+         schemas[key] = schemas[key] || [];
+         schemas[key].push(fields);
+      }
    }
 
-   return Object.values(merge(toObject(target), ...sources.map(src => toObject(src))));
+   return Object.fromEntries(Object.entries(schemas).map(([k, v]) => [k, Object.assign(...v)]));
 }
 
 
@@ -94,16 +103,16 @@ function mergeKeywords(target, ...sources) {
 function modificarProfesor(profesor) {
    let puesto = profesor.puesto,
        tutoria = profesor.tutoria,
-       keywords = [];
+       esquema = {};
 
    profesor = Object.assign({}, profesor)
    delete profesor.puesto;
    delete profesor.tutoria;
 
-   if(puesto) keywords.push({type: "mission", value: puesto})
-   if(tutoria) keywords.push({type: "occupation", value: tutoria})
-   if(keywords.length) {
-      profesor.keywords = mergeKeywords(profesor.keywords, keywords);
+   if(puesto) esquema.puesto = puesto;
+   if(tutoria) esquema.tutoria = tutoria;
+   if(Object.keys(esquema).length > 0) {
+      profesor.customSchemas = mergeSchemas(profesor.customSchemas, {profesor: esquema});
    }
 
    return profesor;
@@ -132,15 +141,25 @@ export function crear(profesor) {
    const config = new Config().content,
          dpto = obtenerDepartamento(profesor.puesto);
 
-   profesor = modificarProfesor(profesor);
+   // TODO: El nombre del esquema hay que obtenerlo.
+   const schema = "profesor";
+
    profesor = Object.assign({
       password: "12341234",
       orgUnitPath: config.ou.claustro.orgUnitPath,
       changePasswordAtNextLogin: true,
+      customSchemas: {
+         // Para buscar por "cese" es necesario que todos tengan una fecha.
+         // Así que, en principio, se fija para todos una fecha inalcanzable.
+         [schema]: { cese: "2100-08-31" }
+      }
    }, profesor);
+   profesor = modificarProfesor(profesor);
 
    return {
       then: (callback, fallback) => {
+         fallback = fallback || fallback_default;
+
          google.usuario.crear(profesor)
             .then(response => google.miembro.agregar(dpto, response.result.id).then(r => callback(response)),
                   error => fallback(error));
@@ -165,26 +184,26 @@ export function actualizar(profesor) {
 
    return {
       then: async (callback, fallback) => {
-         let keywords,
-             cambioDpto = false,
+         fallback = fallback || fallback_default;
+
+         let cambioDpto = false,
+             oldprofesor,
              oldpuesto;
 
-         // Se intenta actualizar el puesto, por lo que hay que manipular keywords.
-         if(profesor.keywords) {
+         // TODO: Probar qué ocurre si no se obtiene oldprofesor.customSchema.
+         // Se modifican los esquemas, por lo que hay que
+         // obtener los esquemas ya existentes y mezclar.
+         if(profesor.customSchemas) {
             try {
-               const response = await google.usuario.obtener(profesor.id || profesor.primaryEmail);
-               keywords = response.result.keywords;
+               const response = await obtener(profesor.id || profesor.primaryEmail);
+               oldprofesor = response.result;
             }
-            catch(error) { delete profesor.keywords; }  // Acabará provocando un error.
+            catch(error) { delete profesor.customSchemas; }  // Acabará provocando un error.
 
-            if(profesor.keywords) {
-               profesor.keywords = mergeKeywords([]. keywords, profesor.keywords);
-               try {
-                  oldpuesto = buscarKeyword("mission", {keywords: keywords}).value;
-               }
-               catch(error) { oldpuesto = null; }
-
-               cambioDpto = oldpuesto !== puesto;
+            if(profesor.customSchemas) {
+               // TOOO:: El nombre del esquema hay que obtenerlo.
+               oldpuesto = obtenerValor("profesor.puesto", oldprofesor);
+               profesor.customSchemas = mergeSchemas(oldprofesor.customSchemas, profesor.customSchemas);
             }
          }
 
@@ -194,7 +213,7 @@ export function actualizar(profesor) {
          }
          catch(error) { return fallback(error); }
          
-         if(puesto && cambioDpto) {
+         if(puesto) {
             if(oldpuesto) oldpuesto = obtenerDepartamento(oldpuesto);
             if(puesto) puesto = obtenerDepartamento(puesto);
             cambioDpto = oldpuesto !== puesto;
@@ -239,5 +258,45 @@ export function operar(profesor) {
          return actualizar(profesor);
       default:
          throw new Error(`${æction}: Acción desconocida`);
+   }
+}
+
+
+/**
+ * Marca un profesor como cesado y lo saca de todos los grupos en los que está
+ *
+ * @param {String} profesor: Identificador o dirección de correo del usuario.
+ * @param {String} fecha: Fecha del cese (YYYY-MM-DD). Si no se especifica,
+ *    se entiende que el día en curso.
+ */
+export function cesar(profesor, fecha) {
+   const id = patchString(profesor);
+   fecha = fecha || new Date().toISOString().slice(0, 10);
+
+   profesor = {}
+
+   if(id.includes('@')) profesor.primaryEmail = id;
+   else profesor.id = id;
+
+   // TODO: Obtener el nombre del esquema.
+   const schema = "profesor";
+
+   profesor.customSchemas = {
+      [schema]: { cese: fecha , puesto: null }
+   }
+
+   return {
+      then: async (callback, fallback) => {
+         const batch = new Batch();
+         batch.add(actualizar(profesor));
+
+         for await (const grupo of grupos(id)) {
+            batch.add(google.miembro.borrar(grupo.email, id));
+         }
+
+         const response = await batch;
+
+         return callback(response);
+      }
    }
 }
