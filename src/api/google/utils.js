@@ -52,6 +52,7 @@ export function listarEntidad(args, listattr, limit) {
             }
             catch(error) { return fallback(error); }
             return callback(lista);
-      }
+      },
+      operacion: "listar"
    }
 }

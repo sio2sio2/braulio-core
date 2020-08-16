@@ -76,11 +76,15 @@ function listar(tipo, args) {
  */
 function obtener(tipo, id, params) {
    id = patchString(id);
-   return gapi.client.request({
+   const request = gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/${tipo}/${id}`,
       method: "GET",
       params: params || {}
    });
+
+   request.operacion = "obtener";
+   request.id = id;
+   return request;
 }
 
 
@@ -89,11 +93,15 @@ function crear(tipo, info) {
 
    if(info[emailField]) info[emailField] = patchString(info[emailField]);
 
-   return gapi.client.request({
-            path: `https://www.googleapis.com/admin/directory/v1/${tipo}`,
-            method: "POST",
-            body: info
-          });
+   const request = gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/${tipo}`,
+      method: "POST",
+      body: info
+   });
+
+   request.operacion = "crear";
+   request.id = info[emailField];
+   return request;
 }
 
 
@@ -112,11 +120,15 @@ function actualizar(tipo, info) {
       delete info[emailField];
    }
 
-   return gapi.client.request({
-            path: `https://www.googleapis.com/admin/directory/v1/${tipo}/${id}`,
-            method: "PUT",
-            body: info
-          });
+   const request = gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/${tipo}/${id}`,
+      method: "PUT",
+      body: info
+   });
+
+   request.operacion = "actualizar";
+   request.id = id;
+   return request;
 }
 
 
@@ -127,10 +139,14 @@ function actualizar(tipo, info) {
  */
 function borrar(tipo, id) {
    id = patchString(id);
-   return gapi.client.request({
-            path: `https://www.googleapis.com/admin/directory/v1/${tipo}/${id}`,
-            method: "DELETE"
-          });
+   const request = gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/${tipo}/${id}`,
+      method: "DELETE"
+   });
+
+   request.operacion = "borrar";
+   request.id = id;
+   return request;
 }
 
 

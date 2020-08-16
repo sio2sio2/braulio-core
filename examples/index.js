@@ -118,7 +118,7 @@ function interfaz(client) {
       clearPre();
       try {
          var i = 1;
-         for await (const grp of client.api.profesor.grupos("josemiguelsanchez").iter()) {
+         for await (const grp of client.api.profesor.grupos("josemiguelsanchez")) {
             appendPre(i + '. ' + grp.email + ' (' + grp.description + ')');
             i++;
          }
@@ -141,6 +141,8 @@ function interfaz(client) {
             });
             return;
          }
+
+         // TODO: Utilizar mi batch.
 
          const batch = gapi.client.newBatch();
          for(const grupo of grupos) {
@@ -184,7 +186,7 @@ function interfaz(client) {
       ]
 
       const batch = new client.api.Batch();
-      grupos.forEach(gr => batch.add({grupo: gr}));
+      grupos.forEach(gr => batch.add(client.api.google.operar({grupo: gr})));
 
       appendPre("Grupos creados::\n");
       let i=0;
@@ -205,7 +207,7 @@ function interfaz(client) {
          const batch = new client.api.Batch();
          grupos.forEach(gr => {
             const grupo = {id: gr.id, description: `${gr.description}. Modificado`};
-            batch.add({grupo: grupo});
+            batch.add(client.api.google.operar({grupo: grupo}));
          });
 
          batch.then(response => {
@@ -230,7 +232,7 @@ function interfaz(client) {
       }
 
       const batch = new client.api.Batch();
-      grupos.forEach(gr => batch.add({grupo: gr.email}));
+      grupos.forEach(gr => batch.add(client.api.google.operar({grupo: gr.email})));
 
       appendPre("Borrando los grupos de prueba... ");
 

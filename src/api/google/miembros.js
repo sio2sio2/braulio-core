@@ -46,10 +46,15 @@ export function listar(groupKey, args) {
 export function borrar(grupo, miembro) {
    grupo = patchString(grupo);
    miembro = patchString(miembro);
-   return gapi.client.request({
-            path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members/${miembro}`,
-            method: "DELETE"
-          });
+
+   const request = gapi.client.request({
+      path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members/${miembro}`,
+      method: "DELETE"
+   });
+
+   request.operacion = "borrar";
+   request.id = `${grupo}|${miembro}`;
+   return request;
 }
 
 
@@ -68,40 +73,13 @@ export function agregar(grupo, miembro) {
    if(miembro.includes('@')) body.email = miembro
    else body.id = miembro;
 
-   return gapi.client.request({
+   const request = gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members`,
       method: "POST",
       body: body
    });
-}
 
-
-// TODO: ¿Esto sirve de algo?
-/**
- * Elimina todos los miembros de un grupo
- *
- * @param {String} grupo: Dirección del grupo del que se quieren obtener los miembros.
- *
- * @returns {Promise} Promeesa que devuelve un objeto cuyas claves son
- *    los miembros eliminados del grupo, y cuyas claves el resultado de esa eliminación
- *    (siempre debería ser éxito).
- */
-export function vaciar(grupo) {
-   return new Promise((resolve, reject) => {
-      grupo = patchString(grupo);
-
-      listar(grupo).then(miembros => {
-         const batch = gapi.client.newBatch();
-
-         for(const m of miembros) batch.add(borrar(grupo, m.email));
-
-            if(miembros.length) {
-               batch.then(response => {
-                  resolve(Object.fromEntries(Object.entries(response.result)
-                     .map(([email, value]) => [email, value.result && value.result.error || {code: value.status, message: "OK"}])));
-               }).catch(error => reject(error.result.error)); 
-            }
-            else resolve({});
-      });
-   });
+   request.operacion = "agregar";
+   request.id = `${grupo}|${miembro}`;
+   return request;
 }

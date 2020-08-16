@@ -5,26 +5,37 @@
 export function crear(info) {
    const body = Object.assign({parentOrgUnitPath: "/", description: info.name}, info);
    info.orgUnitPath = `/${info.name}`;
-   return gapi.client.request({
+   const request = gapi.client.request({
       path: "https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits",
       method: "POST",
       body: body
    });
+
+   request.operacion = "crear";
+   request.id = info.orgUnitPath;
+   return request;
 }
 
 export function listar() {
-   return gapi.client.request({
+   const request = gapi.client.request({
       path: "https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits",
       method: "GET",
       params: { orgUnitPath: "/" }
    });
+
+   request.operacion = "listar";
+   return request;
 }
 
 export function obtener(ou) {
-   return gapi.client.request({
+   const request = gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits/${ou}`,
       method: "GET",
    });
+
+   request.operacion = "obtener";
+   request.id = ou;
+   return request;
 }
 
 
@@ -36,11 +47,15 @@ export function actualizar(ou) {
       delete ou.orgUnitId;
    }
 
-   return gapi.client.request({
+   const request = gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits/${id}`,
       method: "PUT",
       body: ou
    });
+
+   request.operacion = "actualizar";
+   request.id = id;
+   return request;
 }
 
 /**
@@ -49,8 +64,12 @@ export function actualizar(ou) {
  * @param {String} ou: Path o ID de la unidad.
  */
 export function borrar(ou) {
-   return gapi.client.request({
+   const request = gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/customer/my_customer/orgunits/${ou}`,
       method: "DELETE"
    });
+
+   request.operacion = "borrar";
+   request.id = ou;
+   return request;
 }

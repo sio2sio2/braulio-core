@@ -16,7 +16,7 @@ export async function inicializar() {
    const res = {},
          seed = JSON.parse(default_config),
          // {email1: grupo, email2: grupo, etc.}: Relación de grupos existentes.
-         existentes = Object.fromEntries((await google.grupo.listar().get()).map(gr => [gr.email, gr])),
+         existentes = Object.fromEntries((await google.grupo.listar()).map(gr => [gr.email, gr])),
          // {path1: ou, path2: ou, etc.}. Relación de todas las ou existentes.
          ous = Object.fromEntries((await google.ou.listar()).result.organizationUnits.map(ou => [ou.orgUnitPath, ou]));
 
@@ -32,7 +32,7 @@ export async function inicializar() {
          catch(error) {
             ous_inexistentes[`/${ou.name}`] = ou;
          }
-         batch.add(ou.orgUnitId?google.ou.actualizar(ou):google.ou.crear(ou), {id: `${ou.name}`});
+         batch.add(ou.orgUnitId?google.ou.actualizar(ou):google.ou.crear(ou));
       }
 
       // Contenedores: apuntamos IDs o los marcomos como inexistentes.
@@ -46,7 +46,7 @@ export async function inicializar() {
          catch(error) {
             inexistentes[cont[attr].email] = cont[attr];
          }
-         batch.add({grupo: cont[attr]});
+         batch.add(google.operar({grupo: cont[attr]}));
       }
 
       // Departamentos: apuntamos IDs o los marcamos como inexistentes.
@@ -58,7 +58,7 @@ export async function inicializar() {
          catch(error) {
             inexistentes[dpto.email] = dpto;
          }
-         batch.add({grupo: dpto});
+         batch.add(google.operar({grupo: dpto}));
       }
 
       const nocreados = {};

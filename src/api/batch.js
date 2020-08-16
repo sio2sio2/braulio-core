@@ -3,8 +3,6 @@
  * manipilar el formato de los resultados.
  */
 
-import {formatear, operar} from "./google";
-
 function delay(func) {
    const ms = 100*(1 + Math.random());
    setTimeout(func, ms);
@@ -16,17 +14,10 @@ function procesarItem(item, params) {
 
    params = params || {};
 
-   if(item.then) {  // Es directamene una petición.
-      id = params.id || Math.floor(Math.random()*10**15);
-      formatter = value => formatear("otra", value);
-   }
-   else {
-      const entidad = (item.grupo || item.usuario);
-      id = params.id || (typeof entidad === "string")?entidad:(entidad.email || entidad.id);
+   if(!item.then) throw new Error("La operación debe ser un objeto thenable");
 
-      item = operar(item);
-      formatter = value => formatear(item.operacion, value);
-   }
+   id = params.id || item.id ||  Math.floor(Math.random()*10**15);
+   formatter = params.formatter || item.formatter || (value => formatear(item.operacion, value));
 
    delay(() => item.then(() => true));  // Forzamos a que se empiece a hacer la petición.
    return [id, item, formatter];
@@ -82,10 +73,11 @@ function Batch() {
 /**
  * Añade una nueva petición al procesamiento por lotes.
  *
- * @param {Object} item: Petición que puede ser una gapi.client.Request
- *    o un objeto de los que acepta la función "operar".
+ * @param {Object} item: Petición que deben ser un objeto thenable,
+ *    como las gapi.client.Request.
  * @param {Object}: Parámetros para el procesamiento de la petición.
- *    Básicamente el identificador que se desea asociar a la petición.
+ *    Básicamente el identificador que se desea asociar a la petición
+ *    y si se desea usar un formateador particular.
  */
 Batch.prototype.add = function(item, params) {
    if(this._done) throw new Error("Batch cerrado: no pueden añadirse más peticiones");
@@ -98,8 +90,9 @@ Batch.prototype[Symbol.asyncIterator] = async function*() {
    let index = 0;
    while(index < this._buffer.length) {
       const [id, request, formatter] = this._buffer[index++],
-            ok = await request;
-      yield [id, formatter(ok)];
+            ok = formatter(await request);
+      ok.index = index;
+      yield [id, ok];
    }
    this._done = true;
 }
@@ -111,5 +104,69 @@ Batch.prototype.then = async function(callback) {
    for await(const r of this) res.push(r);
    return callback(Object.fromEntries(res));
 }
+
+
+/**
+ * Interpreta el resultado de unaa operación de creación o actualización.
+ *
+ * @param {String} operacion: Operación que se llevó a cabo (creacion, actualizacion)
+ * @oaram {Object} response: Respuesta que generó la operación
+ *
+ * @returns {Object}: Devuelve un objeto con el resultado de la operación.
+ *    
+ *       {value: {...}, error: {code: codigo, raw: error}}
+ *
+ *    donde entity es la entidad creada o modificada (será undefined, si no tuvo éxito);
+ *    code: el código o estado que devuelve la gapi al realizar la operación.
+ *    error: 0, si no se produjo error, 1: la entidad ya existe, 2: la entidad no existe;
+ *       10, cualquier otro error. raw contiene el error crudo.
+ */
+export function formatear(operacion, response) {
+   let res, obj;
+
+   switch(operacion) {
+      case "crear":
+         obj = {
+            codigo: 409,
+            res: 1
+         }
+         break;
+      case "actualizar":
+         obj = {
+            codigo: 404,
+            res: 2
+         }
+         break;
+      case "borrar":
+         obj = {
+            codigo: 404,
+            res: 3
+         }
+         break;
+      default:
+         obj = {
+            codigo: 404,
+            res: 4
+         }
+   }
+
+   if(String(response.status).charAt(0) === "2") {
+      return {
+         value: response.result,
+         operacion: operacion,
+         error: { code: 0 }
+      }
+   }
+   else {
+      return {
+         operacion: operacion,
+         error: {
+            code: response.status === obj.codigo?obj.res:response.status,
+            raw: response.result.error
+         }
+      }
+   }
+}
+
 
 export default Batch;

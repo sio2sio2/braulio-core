@@ -136,6 +136,7 @@ function modificarProfesor(profesor) {
  * incluir al profesor.
  */
 export function crear(profesor) {
+   profesor.primaryEmail = patchString(profesor.primaryEmail);
    if(!profesor.puesto) throw new Error(`'${profesor.primaryEmail}' carece de puesto de desempeño`);
    
    const config = new Config().content,
@@ -163,7 +164,9 @@ export function crear(profesor) {
          google.usuario.crear(profesor)
             .then(response => google.miembro.agregar(dpto, response.result.id).then(r => callback(response)),
                   error => fallback(error));
-      }
+      },
+      operacion: "crear",
+      id: profesor.primaryEmail
    }
 }
 
@@ -183,6 +186,8 @@ export function actualizar(profesor) {
    profesor = modificarProfesor(profesor);
 
    return {
+      operacion: "actualizar",
+      id: patchString(profesor.primaryEmail || profesor.id),
       then: async (callback, fallback) => {
          fallback = fallback || fallback_default;
 
@@ -286,6 +291,8 @@ export function cesar(profesor, fecha) {
    }
 
    return {
+      operacion: "actualizar",
+      id: id,
       then: async (callback, fallback) => {
          const batch = new Batch();
          batch.add(actualizar(profesor));
