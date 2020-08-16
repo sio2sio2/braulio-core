@@ -129,44 +129,31 @@ function interfaz(client) {
    });
 
 
-   document.getElementById("bc").addEventListener("click", function(e) {
+   document.getElementById("bc").addEventListener("click", async function(e) {
       clearPre();
-      client.api.google.grupo.listar({query: "email:BORRAR-*"}).then(grupos => {
-         // Evitamos aposta eliminar un grupo.
-         grupos = grupos.filter(gr => gr.name !== "Música" && gr.name !== "Tutores");
+      appendPre("Borrando configuración y grupos");
+      const grupos = (await client.api.google.grupo.listar({query: "email:BORRAR-*"}))
+               // Dejamos de borrar algrun grupo...
+               .filter(gr => gr.name !== "Música" && gr.name !== "Tutores");
 
-         if(grupos.length === 0) {
-            client.config.remove().then(r => {
-               appendPre("Borrada la configuración:");
-            });
-            return;
-         }
+      const batch = new client.api.Batch();
+      for(const grupo of grupos) batch.add(client.api.google.grupo.borrar(grupo.email));
 
-         // TODO: Utilizar mi batch.
+      const config = client.config.content;
+      for(const ou of Object.values(config.ou || {})) {
+         if(!ou.orgUnitId) continue;
+         batch.add(client.api.google.ou.borrar(ou.orgUnitId));
+      }
 
-         const batch = gapi.client.newBatch();
-         for(const grupo of grupos) {
-            batch.add(client.api.google.grupo.borrar(grupo.email), {id: grupo.email});
-         }
+      const response = await batch;
+      await client.config.remove();
 
-         const config = client.config.content;
-         for(const ou of Object.values(config.ou || {})) {
-            if(!ou.orgUnitId) continue;
-            batch.add(client.api.google.ou.borrar(ou.orgUnitId), {id: ou.orgUnitPath});
-         }
-
-         batch.then(response => {
-            client.config.remove().then(r => {
-               appendPre("Borrada la configuración y los grupos:");
-               let i = 0;
-               for(const [email, result] of Object.entries(response.result)) {
-                  i++;
-                  const res = result.status === 204?"OK":"Fallo";
-                  appendPre(`${i}. ${email}: ${res}.`);
-               }
-            });
-         })
-      });
+      let i = 0;
+      for(const [email, result] of Object.entries(response)) {
+         i++;
+         const res = result.error.code === 0?"OK":"Fallo";
+         appendPre(`${i}. ${email}: ${res}.`);
+      }
    });
 
 

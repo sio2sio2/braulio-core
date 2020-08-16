@@ -89,8 +89,12 @@ Batch.prototype.add = function(item, params) {
 Batch.prototype[Symbol.asyncIterator] = async function*() {
    let index = 0;
    while(index < this._buffer.length) {
-      const [id, request, formatter] = this._buffer[index++],
-            ok = formatter(await request);
+      const [id, request, formatter] = this._buffer[index++];
+      let ok;
+      try {
+         ok = formatter(await request);
+      }
+      catch(error) { ok = formatter(error); }
       ok.index = index;
       yield [id, ok];
    }
