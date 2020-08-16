@@ -102,17 +102,20 @@ function mergeSchemas(target, ...sources) {
 // Convierte los atributos puesto y tutoria en keywords
 function modificarProfesor(profesor) {
    let puesto = profesor.puesto,
-       tutoria = profesor.tutoria,
+       tutoria = profesor.tutoria && patchString(profesor.tutoria),
        esquema = {};
 
    profesor = Object.assign({}, profesor)
    delete profesor.puesto;
    delete profesor.tutoria;
 
+   // TODO: Consultar config.
+   const schema = "profesor";
+
    if(puesto) esquema.puesto = puesto;
-   if(tutoria) esquema.tutoria = tutoria;
+   if(tutoria !== undefined) esquema.tutoria = tutoria;
    if(Object.keys(esquema).length > 0) {
-      profesor.customSchemas = mergeSchemas(profesor.customSchemas, {profesor: esquema});
+      profesor.customSchemas = mergeSchemas(profesor.customSchemas, {[schema]: esquema});
    }
 
    return profesor;
@@ -140,6 +143,8 @@ export function crear(profesor) {
    if(!profesor.puesto) throw new Error(`'${profesor.primaryEmail}' carece de puesto de desempeño`);
    
    const config = new Config().content,
+         tutoria = profesor.tutoria,
+         tutores = config.contenedores.tutores.id,
          dpto = obtenerDepartamento(profesor.puesto);
 
    // TODO: El nombre del esquema hay que obtenerlo.
@@ -158,12 +163,32 @@ export function crear(profesor) {
    profesor = modificarProfesor(profesor);
 
    return {
-      then: (callback, fallback) => {
+      then: async (callback, fallback) => {
          fallback = fallback || fallback_default;
 
-         google.usuario.crear(profesor)
-            .then(response => google.miembro.agregar(dpto, response.result.id).then(r => callback(response)),
-                  error => fallback(error));
+         let response;
+
+         // Creación
+         try {
+            response = await google.usuario.crear(profesor);
+         }
+         catch(error) { return fallback(error); }
+        
+         // Dpto.
+         try {
+            await google.miembro.agregar(dpto, response.result.id);
+         }
+         catch(error) { return fallback(error); }
+
+         // Tutoría
+         if(tutoria) {
+            try {
+               await google.miembro.agregar(tutores, response.result.id);
+            }
+            catch(error) { return fallback(error); }
+         }
+
+         return callback(response);   
       },
       operacion: "crear",
       id: profesor.primaryEmail
@@ -175,13 +200,21 @@ export function crear(profesor) {
  * Actualiza un profesor lo cual implica:
  *
  * * Actulizar el propio profesor.
- * * Quizás dar de baja de su departamento antigio.
- * * Quizás dar de alta de su nuevo departamento.
+ * * Quizás alturar su pertenencia a algún departamento.
+ * * Quizás ponerlo o quitarlo de tutor.
  *
+ * @param {Object} profesor: Usuario de G-Suite. Puede añadir los atributos
+ * extra "puesto" y "tutoria". El primero es el código el puesto de desempeño
+ * y el segundo la dirección de correo del grupo de clase del que es tutor.
+ * Si esta segundo es "null", se sobrentiende que se quiere eliminar la tutoría
+ * anteriormente asignada.
  *
  */
 export function actualizar(profesor) {
-   let puesto = profesor.puesto;
+   const config = new Config().content;
+
+   let puesto = profesor.puesto,
+       tutoria = profesor.tutoria;
 
    profesor = modificarProfesor(profesor);
 
@@ -192,24 +225,24 @@ export function actualizar(profesor) {
          fallback = fallback || fallback_default;
 
          let cambioDpto = false,
-             oldprofesor,
-             oldpuesto;
+             oldprofesor, oldpuesto, oldtutoria;
 
-         // TODO: Probar qué ocurre si no se obtiene oldprofesor.customSchema.
-         // Se modifican los esquemas, por lo que hay que
-         // obtener los esquemas ya existentes y mezclar.
-         if(profesor.customSchemas) {
+         // Los valores del esquema que no se proporcionan, no
+         // cambian al actualizar el profesor, por lo que en principio
+         // no es necesario obtener el esquema antiguo. Sin embargo,
+         // el cambio de puesto o de tutoría, pueden provocar cambios
+         // en la membresía, por lo que hay que cerciorarse de los cambios.
+         if(puesto || tutoria !== undefined) {
             try {
                const response = await obtener(profesor.id || profesor.primaryEmail);
                oldprofesor = response.result;
             }
-            catch(error) { delete profesor.customSchemas; }  // Acabará provocando un error.
+            catch(error) { return fallback(error); }
 
-            if(profesor.customSchemas) {
-               // TOOO:: El nombre del esquema hay que obtenerlo.
-               oldpuesto = obtenerValor("profesor.puesto", oldprofesor);
-               profesor.customSchemas = mergeSchemas(oldprofesor.customSchemas, profesor.customSchemas);
-            }
+            // TODO:: El nombre del esquema hay que obtenerlo.
+            const schema = "profesor";
+            oldpuesto = obtenerValor(`${schema}.puesto`, oldprofesor);
+            oldtutoria = obtenerValor(`${schema}.tutoria`, oldprofesor);
          }
 
          let response;
@@ -224,7 +257,7 @@ export function actualizar(profesor) {
             cambioDpto = oldpuesto !== puesto;
          }
 
-         if(puesto && cambioDpto) {
+         if(cambioDpto) {
             try {
                if(oldpuesto) await google.miembro.borrar(oldpuesto, response.result.id);
                if(puesto) await google.miembro.agregar(puesto, response.result.id);
@@ -233,6 +266,17 @@ export function actualizar(profesor) {
                console.error(error);
             }
          }
+
+         const tutores = config.contenedores.tutores.id;
+         try {
+            if(oldtutoria && tutoria === null) {
+               await google.miembro.borrar(tutores, response.result.id);
+            }
+            else if(!oldtutoria && tutoria) {
+               await google.miembro.agregar(tutores, response.result.id);
+            }
+         }
+         catch(error) { console.error(error); }
 
          return callback(response);
       }

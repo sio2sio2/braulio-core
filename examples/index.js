@@ -239,7 +239,8 @@ function interfaz(client) {
             familyName: "Aburridamente Inteligente",
             fullName: "Profesor Aburridamente Inteligente"
          },
-         puesto: "11590006"
+         puesto: "11590006",
+         tutoria: "eso1a"
       }
 
       clearPre();
@@ -260,7 +261,8 @@ function interfaz(client) {
    document.getElementById("mp"). addEventListener("click", async function(e) {
       const profesor = {
          primaryEmail: "borrar-soyprofesor",
-         puesto: "00590008"
+         puesto: "00590010",
+         tutoria: null
       }
 
       clearPre();

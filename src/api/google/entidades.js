@@ -78,8 +78,10 @@ function listar() {
  * @param {String{ id: La dirección o el identificador de la entidad.
  */
 function obtener(id, params) {
+   const customer = (this.tipo === "users" || this.tipo === "groups")?"":"customer/my_customer/";
+
    const req = {
-      path: `https://www.googleapis.com/admin/directory/v1/${this.tipo}/${id}`,
+      path: `https://www.googleapis.com/admin/directory/v1/${customer}${this.tipo}/${id}`,
       method: "GET"
    }
    if(params) Object.assign(req, {params: params});
@@ -93,8 +95,10 @@ function obtener(id, params) {
 
 
 function crear(info) {
+   const customer = (this.tipo === "users" || this.tipo === "groups")?"":"customer/my_customer/";
+
    const request = gapi.client.request({
-      path: `https://www.googleapis.com/admin/directory/v1/${this.tipo}`,
+      path: `https://www.googleapis.com/admin/directory/v1/${customer}${this.tipo}`,
       method: "POST",
       body: info
    });
@@ -136,8 +140,10 @@ function actualizar(info) {
  * @param {String} id: Identificador o dirección del usuario.
  */
 function borrar(id) {
+   const customer = (this.tipo === "users" || this.tipo === "groups")?"":"customer/my_customer/";
+
    const request = gapi.client.request({
-      path: `https://www.googleapis.com/admin/directory/v1/${this.tipo}/${id}`,
+      path: `https://www.googleapis.com/admin/directory/v1/${customer}${this.tipo}/${id}`,
       method: "DELETE"
    });
    request.operacion = "borrar";
@@ -157,7 +163,8 @@ const usuario = {
       return listarPaginado.call(this, args);
    },
    obtener: function(id, params) {
-      return obtener.call(this, patchString(id), params);
+      id = patchString(id);
+      return obtener.call(this, id, params);
    },
    borrar: function(id) {
       id = patchString(id);
@@ -185,7 +192,8 @@ const grupo = {
       return listarPaginado.call(this, args);
    },
    obtener: function(id, params) {
-      return obtener.call(this, patchString(id), params);
+      id = patchString(id);
+      return obtener.call(this, id, params);
    },
    borrar: function(id) {
       id = patchString(id);
@@ -214,7 +222,7 @@ const esquema = {
 const ou = {
    tipo: "orgunits",
    idField: "orgUnitId",
-   emailField: "orgUnitPath",
+   emailField: "name",
    listar: listar,
    obtener: obtener,
    crear: function(info) {
