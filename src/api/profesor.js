@@ -246,20 +246,20 @@ export function actualizar(profesor) {
  * - Si el argumento es una cadena, sobrentiende que es borrar.
  * - Si el argumento es un objeto:
  *   + Si el objeto pasee el atributo action, hará lo que diga
- *     el atributo ("update" o "create").
+ *     el atributo ("actualizar" o "crear").
  *   + Si no dispone de ese atributo:
  *      + Si no dispone de identificador, intenta crear.
  *      + Si dospone de identificador, actualiza datos.
  *
  */
 export function operar(profesor) {
-   const action = profesor.action || (typeof profesor === "string"?"delete":(profesor.id?"update":"create"));
+   const action = profesor.action || (typeof profesor === "string"?"borrar":(profesor.id?"actualizar":"crear"));
    switch(action) {
-      case "create":
+      case "crear":
          return crear(profesor);
-      case "delete":
+      case "borrar":
          return borrar(profesor);
-      case "update":
+      case "actualizar":
          return actualizar(profesor);
       default:
          throw new Error(`${æction}: Acción desconocida`);

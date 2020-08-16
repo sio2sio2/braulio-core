@@ -123,7 +123,7 @@ Config.prototype.init = function() {
  *    se guarda y se desencadena "saveconfig".
  *
  * @param {Boolean} merge: Si se mezcla el contenido proporcionado en el primer
- *    parámetro con el actual, en vez de sustyituirse.
+ *    parámetro con el actual, en vez de sustituirse.
  */
 Config.prototype.set = function(content, merge) {
    if(this.id === null) throw new Error("Configuración no inicializada");

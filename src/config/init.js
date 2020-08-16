@@ -46,7 +46,7 @@ export async function inicializar() {
          catch(error) {
             inexistentes[cont[attr].email] = cont[attr];
          }
-         batch.add(google.operar({grupo: cont[attr]}));
+         batch.add(google.grupo.operar(cont[attr]));
       }
 
       // Departamentos: apuntamos IDs o los marcamos como inexistentes.
@@ -58,7 +58,7 @@ export async function inicializar() {
          catch(error) {
             inexistentes[dpto.email] = dpto;
          }
-         batch.add(google.operar({grupo: dpto}));
+         batch.add(google.grupo.operar(dpto));
       }
 
       const nocreados = {};

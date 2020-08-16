@@ -186,7 +186,7 @@ function interfaz(client) {
       ]
 
       const batch = new client.api.Batch();
-      grupos.forEach(gr => batch.add(client.api.google.operar({grupo: gr})));
+      grupos.forEach(gr => batch.add(client.api.google.grupo.operar(gr)));
 
       appendPre("Grupos creados::\n");
       let i=0;
@@ -207,7 +207,7 @@ function interfaz(client) {
          const batch = new client.api.Batch();
          grupos.forEach(gr => {
             const grupo = {id: gr.id, description: `${gr.description}. Modificado`};
-            batch.add(client.api.google.operar({grupo: grupo}));
+            batch.add(client.api.google.grupo.operar(grupo));
          });
 
          batch.then(response => {
@@ -232,7 +232,7 @@ function interfaz(client) {
       }
 
       const batch = new client.api.Batch();
-      grupos.forEach(gr => batch.add(client.api.google.operar({grupo: gr.email})));
+      grupos.forEach(gr => batch.add(client.api.google.grupo.operar(gr.email)));
 
       appendPre("Borrando los grupos de prueba... ");
 

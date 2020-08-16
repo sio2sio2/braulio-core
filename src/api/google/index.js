@@ -5,6 +5,14 @@ import * as esquema from "./esquemas.js";
 
 export {usuario, grupo, ou, miembro, esquema}
 
+const entidad = {
+   usuario: usuario,
+   grupo: grupo,
+   ou: ou,
+   miembro: miembro,
+   esquema: esquema
+}
+
 /**
  * Crea o actualiza el grupo o usuario que se proporciona.
  *
@@ -22,26 +30,47 @@ export {usuario, grupo, ou, miembro, esquema}
  *   - Excepcionalmente, si la entidad posee el atributo "modify" a true,
  *     se procederá a la modificación aunque no haya identificador.
  */
-export function operar(entidad) {
-   let tipo, operacion;
+export function operar(tipo, info) {
+   const modulo = entidad[tipo];
+   let id, email, operacion;
 
-   if(entidad.usuario) tipo = usuario;
-   else if(entidad.grupo) tipo = grupo;
-   else throw new Error("Tipo de entidad desconocido");
-
-   entidad = entidad.usuario || entidad.grupo;
-
-   if(typeof entidad === "string") operacion = "borrar";
-   else if(!entidad.id && !entidad.email) {
-      throw new Error("Imposible operar con la entidad: no hay identificador ni correo electrónico.")
+   switch(tipo) {
+      case "usuario":
+         id = info.id;
+         email = info.primaryEmail;
+         break;
+      case "grupo":
+         id = info.id;
+         email = info.email;
+         break;
+      case "esquema":
+         id = info.schemaId;
+         email = info.schemaName;
+         break;
+      case "ou":
+         id = info.orgUnitId;
+         email = info.orgUnitPath;
+         break;
+      default:
+         throw new Error("Tipo de entidad desconocido");
    }
-   else if(entidad.modify) {
-      operacion = "actualizar";
-      entidad = Object.assign({}, entidad);
-      delete entidad.modify;
+
+   if(typeof info === "string") operacion = "borrar";
+   else if(!id && !email) {
+      throw new Error(`Imposible operar con el ${tipo}: no hay identificador ni dirección única.`)
    }
-   else if(entidad.id) operacion = "actualizar";
+   else if(info.action) {
+      operacion = info.action
+      info = Object.assign({}, info);
+      delete info.action;
+   }
+   else if(id) operacion = "actualizar";
    else operacion = "crear";
 
-   return tipo[operacion](entidad);
+   return modulo[operacion](info);
 }
+
+usuario.operar = usuario => operar("usuario", usuario);
+grupo.operar = grupo => operar("grupo", grupo);
+ou.operar = ou => operar("ou", ou);
+esquema.operar = esquema => operar("esquema", esquema);
