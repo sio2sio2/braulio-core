@@ -1,7 +1,5 @@
-import {usuario, grupo} from "./grusers.js";
-import * as ou from "./ou.js";
+import {usuario, grupo, ou, esquema} from "./entidades.js";
 import * as miembro from "./miembros.js";
-import * as esquema from "./esquemas.js";
 
 export {usuario, grupo, ou, miembro, esquema}
 
@@ -30,47 +28,25 @@ const entidad = {
  *   - Excepcionalmente, si la entidad posee el atributo "modify" a true,
  *     se procederá a la modificación aunque no haya identificador.
  */
-export function operar(tipo, info) {
-   const modulo = entidad[tipo];
+function operar(info) {
    let id, email, operacion;
 
-   switch(tipo) {
-      case "usuario":
-         id = info.id;
-         email = info.primaryEmail;
-         break;
-      case "grupo":
-         id = info.id;
-         email = info.email;
-         break;
-      case "esquema":
-         id = info.schemaId;
-         email = info.schemaName;
-         break;
-      case "ou":
-         id = info.orgUnitId;
-         email = info.orgUnitPath;
-         break;
-      default:
-         throw new Error("Tipo de entidad desconocido");
-   }
-
    if(typeof info === "string") operacion = "borrar";
-   else if(!id && !email) {
-      throw new Error(`Imposible operar con el ${tipo}: no hay identificador ni dirección única.`)
+   else if(!info[this.idField] && !info[this.emailField]) {
+      throw new Error(`Imposible operar con el ${this.tipo}: no hay identificador ni dirección única.`)
    }
    else if(info.action) {
       operacion = info.action
       info = Object.assign({}, info);
       delete info.action;
    }
-   else if(id) operacion = "actualizar";
+   else if(info[this.idField]) operacion = "actualizar";
    else operacion = "crear";
 
-   return modulo[operacion](info);
+   return this[operacion](info);
 }
 
-usuario.operar = usuario => operar("usuario", usuario);
-grupo.operar = grupo => operar("grupo", grupo);
-ou.operar = ou => operar("ou", ou);
-esquema.operar = esquema => operar("esquema", esquema);
+usuario.operar = operar
+grupo.operar = operar
+ou.operar = operar
+esquema.operar = operar
