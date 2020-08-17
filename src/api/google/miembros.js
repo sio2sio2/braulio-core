@@ -1,6 +1,5 @@
 // Funciones relacionadas con la membresía.
-import {patchString} from "../misc.js";
-import {listarEntidad} from "./utils.js";
+import {GrUsers} from "./base.js";
 
 /**
  * Lista todos los miemnbros de un grupo.
@@ -17,7 +16,7 @@ import {listarEntidad} from "./utils.js";
  * Véanse los ejemplos de obtUsuarios.
  */
 export function listar(groupKey, args) {
-   groupKey = patchString(groupKey);
+   groupKey = GrUsers.parseID(groupKey);
    args = args || {};
    const limit = args.limit;
    delete args.limit;
@@ -33,7 +32,7 @@ export function listar(groupKey, args) {
       params: args
    }
 
-   return listarEntidad(query_params, "result.members", limit);
+   return GrUsers.listarPaginado.call(this, query_params, "result.members", limit);
 }
 
 
@@ -44,8 +43,8 @@ export function listar(groupKey, args) {
  * @param {String} miembro: Identificador o dirección del miembro.
  */
 export function borrar(grupo, miembro) {
-   grupo = patchString(grupo);
-   miembro = patchString(miembro);
+   grupo = GrUsers.parseID(grupo);
+   miembro = GrUsers.parseID(miembro);
 
    const request = gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members/${miembro}`,
@@ -67,8 +66,8 @@ export function borrar(grupo, miembro) {
 export function agregar(grupo, miembro) {
    const body = { role: "MEMBER" };
 
-   grupo = patchString(grupo);
-   miembro = patchString(miembro);
+   grupo = GrUsers.parseID(grupo);
+   miembro = GrUsers.parseID(miembro);
 
    if(miembro.includes('@')) body.email = miembro
    else body.id = miembro;

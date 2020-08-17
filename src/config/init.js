@@ -2,7 +2,7 @@
 
 import DEFAULT_CONFIG from "./config.json";
 import {normalizar, generarCuentaDepartamento} from "../utils.js";
-import {patchString} from "../api/misc.js";
+import {fqda} from "../api/misc.js";
 import * as google from "../api/google";
 import Batch from "../api/batch.js"; 
 
@@ -39,7 +39,7 @@ export async function inicializar() {
       const cont = seed.contenedores,
             inexistentes = {};
       for(const attr in cont) {
-         cont[attr].email = patchString(cont[attr].email || generarCuentaDepartamento(cont[attr].name));
+         cont[attr].email = fqda(cont[attr].email || generarCuentaDepartamento(cont[attr].name));
          if(!cont[attr].email.startsWith("borrar-")) cont[attr].email = "borrar-" + cont[attr].email;  // TODO: Eliminar esto.
 
          try { cont[attr].id = existentes[cont[attr].email].id }
@@ -51,7 +51,7 @@ export async function inicializar() {
 
       // Departamentos: apuntamos IDs o los marcamos como inexistentes.
       for(const dpto of seed.departamentos) {
-         dpto.email = patchString(dpto.email || generarCuentaDepartamento(dpto.name));
+         dpto.email = fqda(dpto.email || generarCuentaDepartamento(dpto.name));
          if(!dpto.email.startsWith("borrar-")) dpto.email = "borrar-" + dpto.email;  // TODO: Eliminar esto.
          dpto.description = `Departamento de ${dpto.name}`;
          try { dpto.id = existentes[dpto.email].id }

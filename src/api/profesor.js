@@ -1,6 +1,6 @@
 import Config from "../config";
 import * as google from "./google";
-import {patchString, fallback as fallback_default} from "./misc.js";
+import {fqda, fallback as fallback_default} from "./misc.js";
 import Batch from "./batch.js";
 
 //  Métodos asociados a la manipulación de profesores.
@@ -102,7 +102,7 @@ function mergeSchemas(target, ...sources) {
 // Convierte los atributos puesto y tutoria en keywords
 function modificarProfesor(profesor) {
    let puesto = profesor.puesto,
-       tutoria = profesor.tutoria && patchString(profesor.tutoria),
+       tutoria = profesor.tutoria && fqda(profesor.tutoria),
        esquema = {};
 
    profesor = Object.assign({}, profesor)
@@ -139,7 +139,7 @@ function modificarProfesor(profesor) {
  * incluir al profesor.
  */
 export function crear(profesor) {
-   profesor.primaryEmail = patchString(profesor.primaryEmail);
+   profesor.primaryEmail = fqda(profesor.primaryEmail);
    if(!profesor.puesto) throw new Error(`'${profesor.primaryEmail}' carece de puesto de desempeño`);
    
    const config = new Config().content,
@@ -220,7 +220,7 @@ export function actualizar(profesor) {
 
    return {
       operacion: "actualizar",
-      id: patchString(profesor.primaryEmail || profesor.id),
+      id: fqda(profesor.primaryEmail || profesor.id),
       then: async (callback, fallback) => {
          fallback = fallback || fallback_default;
 
@@ -319,7 +319,7 @@ export function operar(profesor) {
  *    se entiende que el día en curso.
  */
 export function cesar(profesor, fecha) {
-   const id = patchString(profesor);
+   const id = fqda(profesor);
    fecha = fecha || new Date().toISOString().slice(0, 10);
 
    profesor = {}
