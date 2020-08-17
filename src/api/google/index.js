@@ -28,7 +28,7 @@ const entidad = {
  *   - Excepcionalmente, si la entidad posee el atributo "modify" a true,
  *     se procederá a la modificación aunque no haya identificador.
  */
-function operar(info) {
+export function operar(info) {
    let id, email, operacion;
 
    if(typeof info === "string") operacion = "borrar";

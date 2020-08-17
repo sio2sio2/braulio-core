@@ -549,14 +549,32 @@ Es importante tener presente tres cosas:
 Los métodos de manipulación de las cuentas de G-Suite se encuentra dentro del
 objeto ``mayordomo.api``
 
+#### Manipulación a alto nivel
+
+Podemos manipular *profesores*, *departamentos*, *alumnos* y *grupos* (de
+clase) directamente a través de los objetos:
+
+| Objetos          | Descripción                                 |
+| ---------------- | ------------------------------------------- |
+| ``api.profesor`` | Métodos de manipulación de profesores.      |
+| ``api.alumno``   | Métodos de manipulación de alumnos.         |
+| ``api.dpto``     | Métodos de manipulación de departamentos.   |
+| ``api.clase``    | Métodos de manipulación de grupos de clase. |
+
+
+#### Manipulación a bajo nivel
+
 #### Procesamiento por lotes
 
 Para llevar a cabo varias acciones en serie (p.e. dar de alta una lista de
-profesores) es conveniente usar:
+profesores) es muy conveniente usar:
 
 | Clase      | Descripción                                  |
 | ---------- | -------------------------------------------- |
 | ``Batch``  | Procesar en conjunto de varias peticiones.   |
+
+que se encargará no solo de ejecutarlas, sino también de espaciar mínimamente la
+petición para evitar alcanzar los límites dispuestos por *Google*.
 
 Para comenzar el procesamiento de varias peticiones debe crearse un objeto:
 
@@ -574,32 +592,18 @@ El objeto es un *Thenable* que dispone de algunos métodos:
 | ``then(callback)``    | Método típo de los objetos *thenables*.        |
 
 El método ``add()`` permite añadir una nueva petición al procesamiento, para lo
-cual es necesario proporcionar dos argumentos: el segundo sirve únicamente para
-facilitar un identificador a la petición, mientras que el primero puede adoptar
-dos formas:
-
-1. Un objeto ``gapi.client.Request``:
-
-   ~~~javascript
-
-      batch.add(mayordomo.api.profesor.borrar("profesor1"), {id: "profesor1"});
-
-   ~~~
-
-   En este caso, si no se facilita el identificador, se generará uno aleatorio.
-
-1. Un objeto como el pasado al método ``operar``:
+cual es necesario proporcionar dos argumentos: el segundo sirve para
+facilitar un identificador (*id*) a la petición o indicar una función de
+formateo (*formatter*), que modifique la respuesta de la petición. Sin embargo,
+Las peticiones ya definidas en la librería definen ya un identificador y una
+función de formaceo apropiada, por lo que podemos prencindir de la inclusión
+de estos parámentros:
 
    ~~~javascript
 
-      batch.add({usuario: "profesor1"});
+      batch.add(mayordomo.api.profesor.borrar("profesor1"));
 
    ~~~
-
-   En el ejemplo, el objeto determina que se quiera borrar el usuario de cuenta
-   *profesor1* y se utilizá con identificador la dirección de la propia cuenta.
-   Podríase, no obstante, definir un identificador distinto utilizando el
-   segundo argumento, como se hizo en el caso anterior.
 
 Cuando se han añadido todas las peticiones que se quieren llevar a cabo en
 bloque, hay dos alternativas para recuperar los resultados de tales peticiones:
@@ -651,7 +655,7 @@ El objeto de resultado para cada petición tiene la  siguiente forma:
 
 {
    value: { usuario o grupo },
-   operacion: "actualizar", // o "crear" o "borrar".
+   operacion: "actualizar", // o "crear" o "borrar", etc.
    error: {
       code: CODIGO_NUMERICO,
       raw: { objeto de error proporcionado por google }
