@@ -1,6 +1,7 @@
 import {OuSchemas} from "./base.js";
 
 class OrgUnits extends OuSchemas {
+   get tipo() { return "orgunits"; }
    get idField() { return "orgUnitId"; }
    get emailField() { return "name"; }
    get customer() { return "customer/my_customer/"; }

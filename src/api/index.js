@@ -11,7 +11,8 @@ export function testGroupsRequest(grupo) {
 
 import * as google from "./google";
 import Batch from "./batch.js";
-import * as profesor from "./profesor.js";
+import Profesor from "./profesor.js";
 import * as dpto from "./departamento.js";
 
-export {google, Batch, profesor, dpto};
+export {google, Batch, dpto};
+export const profesor = new Profesor();

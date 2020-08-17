@@ -2,6 +2,7 @@ import {GrUsers} from "./base.js";
 import {fqda} from "../misc.js";
 
 class Groups extends GrUsers {
+   get tipo() { return "groups"; }
    get idField() { return "id"; }
    get emailField() { return "email"; }
    get customer() { return ""; }

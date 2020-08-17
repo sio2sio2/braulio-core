@@ -1,6 +1,7 @@
 import {GrUsers} from "./base.js";
 
 class Users extends GrUsers {
+   get tipo() { return "users"; }
    get idField() { return "id"; }
    get emailField() { return "primaryEmail"; }
    get customer() { return ""; }

@@ -6,11 +6,11 @@ import {fqda} from "../misc.js";
  */
 class EntidadBase {
    // Patrón singleton
-   static get singleton() {
+   get singleton() {
       return this._singleton;
    }
 
-   static set singleton(value) {
+   set singleton(value) {
       Object.defineProperty(this, "_singleton", {
          value: value,
       });
@@ -20,12 +20,12 @@ class EntidadBase {
       try { this.idField; }
       catch(error) { throw new Error(`${this.constructor.name}: clase abstracta`); }
 
-      if(this.constructor.singleton) return this.constructor.singleton;
-      this.constructor.singleton = this;
+      if(this.singleton) return this.singleton;
+      this.singleton = this;
    }
 
    get tipo() {
-      return this.constructor.name.toLowerCase();
+      throw new Error('Atributo abstracto');
    }
 
    get idField() {
