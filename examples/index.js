@@ -10,7 +10,7 @@ function interfaz(client) {
       window.crearEsquema = function() {
          client.api.google.esquema.crear({
             displayName: "Mi primera esquema de profesor",
-            schemaName: "profesor",
+            schemaName: "claustro",
             fields: [
                {
                   fieldName: "puesto",
@@ -288,6 +288,56 @@ function interfaz(client) {
       client.api.profesor.borrar(profesor)
          .then(response => appendPre(`${profesor}: OK`),
                error => appendPre(`${profesor}: Falló`));
+   });
+
+   document.getElementById("cd"). addEventListener("click", function(e) {
+      const dpto = {name: "Administración", email: "borrar-administracion", puestos: ["/.{2}590101/"]}
+
+      clearPre();
+      appendPre("Creando departamentos:")
+      client.api.dpto.crear(dpto)
+         .then(response => {
+                  appendPre(`${response.result.email}: OK`);
+                  console.log("DEBUG", response);
+               },
+               error => {
+                  appendPre(`${dpto.email}: Falló`);
+                  console.error("DEBUG", error);
+               });
+
+   });
+
+   document.getElementById("md"). addEventListener("click", function(e) {
+      const dpto = {name: "Administración y finanzas", email: "borrar-administracion", puestos: ["/.{2}590101/", "/.{2}591222/"]};
+
+      clearPre();
+      appendPre("Actualizando departamentos:");
+      client.api.dpto.actualizar(dpto)
+         .then(response => {
+                  appendPre(`${response.result.email}: OK`);
+                  console.log("DEBUG", response);
+               },
+               error => {
+                  appendPre(`${dpto.email}: Falló`);
+                  console.error("DEBUG", error);
+               });
+   });
+
+   document.getElementById("bd"). addEventListener("click", function(e) {
+      const dpto = "borrar-administracion";
+
+      clearPre();
+      appendPre("Borrando departamentos:")
+      client.api.dpto.borrar(dpto)
+         .then(response => {
+                  appendPre(`${dpto}: OK`);
+                  console.log("DEBUG", response);
+               },
+               error => {
+                  appendPre(`${dpto}: Falló`);
+                  console.error("DEBUG", error);
+               });
+
    });
 }
 

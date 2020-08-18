@@ -8,5 +8,5 @@ export function fqda(address) {
 
 export function fallback(error) {
    console.error(error);
-   throw new Error("thenable son función de fallback");
+   throw new Error("thenable sin función de fallback");
 }

@@ -1,46 +1,14 @@
-import Config from "../config";
 import * as google from "./google";
 import {fqda, fallback as fallback_default} from "./misc.js";
 import Batch from "./batch.js";
+import BaseComun from "./base.js"
 
 
-class Profesor extends google.clase.Users {
-   get config() {
-      return this._config || Object.defineProperty(this, "_config", {value: new Config()})._config;
-   }
-
-   // TODO: Hay que obtener este valor this.config.
-   get schema() { return "profesor"; }
-
-   get contenedor() { return this.config.content.contenedores.claustro; }
-
-   // Buscan campos en los esquemas.
-   obtenerValor(clave, entidad) {
-      if(!entidad.customSchemas) return null;
-
-      try {
-         return entidad.customSchemas[this.schema][clave];
-      }
-      catch(error) { 
-         return undefined; 
-      }
-   }
-
-   // Mezcla dos o más esquemas.
-   mergeSchemas(target, ...sources) {
-      const schemas = {};
-      for(const obj of [target, ...sources]) {
-         for(const [key, fields] of Object.entries(obj || {})) {
-            schemas[key] = schemas[key] || [];
-            schemas[key].push(fields);
-         }
-      }
-
-      return Object.fromEntries(Object.entries(schemas).map(([k, v]) => [k, Object.assign(...v)]));
-   }
+class Profesor extends BaseComun(google.clase.Users) {
+   get identificador() { return "claustro"; }
 
    listar(args) {
-      const path = this.contenedor.orgUnitPath || `/${this.contenedor.name}`
+      const path = this.organizador.orgUnitPath || `/${this.organizador.name}`
       args = Object.assign({query: `orgUnitPath=${path}`}, args);
       return super.listar(args);
    }
@@ -89,10 +57,6 @@ class Profesor extends google.clase.Users {
       return profesor;
    }
 
-   obtener(profesor) {
-      return super.obtener(profesor, {projection: "custom", customFieldMask: this.schema});
-   }
-
    /**
     * Crea un nuevo profesor, lo cual implica:
     *
@@ -129,7 +93,8 @@ class Profesor extends google.clase.Users {
       }, profesor);
       profesor = this.modificarProfesor(profesor);
 
-      return {
+      const request = super.crear(profesor);
+      return Object.assign({}, request, {
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
 
@@ -137,29 +102,35 @@ class Profesor extends google.clase.Users {
 
             // Creación
             try {
-               response = await super.crear(profesor);
+               response = await request;
             }
             catch(error) { return fallback(error); }
            
+            const extra = response.additional = {};
+
             // Dpto.
             try {
-               await google.miembro.agregar(dpto, response.result.id);
+               extra.dpto = await google.miembro.agregar(dpto, response.result.id);
             }
-            catch(error) { return fallback(error); }
+            catch(error) { 
+               extra.dpto = error;
+               return fallback(response); 
+            }
 
             // Tutoría
             if(tutoria) {
                try {
-                  await google.miembro.agregar(tutores, response.result.id);
+                  extra.tutoria = await google.miembro.agregar(tutores, response.result.id);
                }
-               catch(error) { return fallback(error); }
+               catch(error) { 
+                  extra.tutoria = error;
+                  return fallback(error); 
+               }
             }
 
             return callback(response);   
-         },
-         operacion: "crear",
-         id: profesor[this.emailField]
-      }
+         }
+      });
    }
 
    /**
@@ -184,9 +155,8 @@ class Profesor extends google.clase.Users {
 
       profesor = this.modificarProfesor(profesor);
 
-      return {
-         operacion: "actualizar",
-         id: profesor[this.emailField] || profesor[this.idField],
+      const request = super.actualizar(profesor);
+      return Object.assign({}, request, {
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
 
@@ -211,7 +181,7 @@ class Profesor extends google.clase.Users {
 
             let response;
             try {
-               response = await super.actualizar(profesor);
+               response = await request;
             }
             catch(error) { return fallback(error); }
             
@@ -221,30 +191,52 @@ class Profesor extends google.clase.Users {
                cambioDpto = oldpuesto !== puesto;
             }
 
+            const extra = response.additional = {
+               dpto: {
+                  borrar: null,
+                  agregar: null
+               },
+               tutoria: null
+            };
+
             if(cambioDpto) {
-               try {
-                  if(oldpuesto) await google.miembro.borrar(oldpuesto, response.result.id);
-                  if(puesto) await google.miembro.agregar(puesto, response.result.id);
+               if(oldpuesto) {
+                  try {
+                     extra.dpto.borrar = await google.miembro.borrar(oldpuesto, response.result.id);
+                  }
+                  catch(error) {
+                     console.error(error);
+                     extra.dpto.borrar = error;
+                  }
                }
-               catch(error) {
-                  console.error(error);
+               if(puesto) {
+                  try {
+                     extra.dpto.agregar = await google.miembro.agregar(puesto, response.result.id);
+                  }
+                  catch(error) {
+                     console.error(error);
+                     extra.dpto.agregar = error;
+                  }
                }
             }
 
             const tutores = config.contenedores.tutores.id;
             try {
                if(oldtutoria && tutoria === null) {
-                  await google.miembro.borrar(tutores, response.result.id);
+                  extra.tutoria = await google.miembro.borrar(tutores, response.result.id);
                }
                else if(!oldtutoria && tutoria) {
-                  await google.miembro.agregar(tutores, response.result.id);
+                  extra,tutoria = await google.miembro.agregar(tutores, response.result.id);
                }
             }
-            catch(error) { console.error(error); }
+            catch(error) { 
+               console.error(error);
+               extra.tutoria = error;
+            }
 
             return callback(response);
          }
-      }
+      });
    }
 
    /**
@@ -258,33 +250,30 @@ class Profesor extends google.clase.Users {
       const id = this.constructor.parseID(profesor);
       fecha = fecha || new Date().toISOString().slice(0, 10);
 
-
-      profesor = {}
-      profesor.customSchemas = {
-         [this.schema]: { cese: fecha , puesto: null }
+      profesor = {
+         customSchemas: {
+            [this.schema]: { cese: fecha , puesto: null }
+         }
       }
 
       if(id.includes('@')) profesor[this.emailField] = id;
       else profesor[this.idField] = id;
 
-      return {
-         operacion: "actualizar",
-         id: id,
+      const request = this.actualizar(profesor);
+
+      return Object.assign({}, request, {
          then: async (callback, fallback) => {
             const batch = new Batch();
-            batch.add(this.actualizar(profesor));
+            batch.add(request);
 
-            for await (const grupo of this.grupos(id)) {
-               batch.add(google.miembro.borrar(grupo.email, id));
+            for await (const grupo of this.grupos(request.id)) {
+               batch.add(google.miembro.borrar(grupo.email, request.id));
             }
 
-            const response = await batch;
-
-            return callback(response);
+            return callback(await batch);
          }
-      }
+      });
    }
-
 }
 
 export default Profesor;
