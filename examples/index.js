@@ -73,6 +73,11 @@ function interfaz(client) {
       Array.from(document.querySelectorAll("p button")).forEach(b => b.disabled = true);
    });
 
+   client.on("configerror", function(e) {
+      appendPre("¡¡¡¡Errores en la configuración!!!");
+      console.warn("DEBUG", e.pending);
+   });
+
    document.getElementById("lu").addEventListener("click", async function(e) {
       clearPre();
       var i = 1;

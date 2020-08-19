@@ -18,7 +18,7 @@ export async function inicializar() {
          // {email1: grupo, email2: grupo, etc.}: Relación de grupos existentes.
          existentes = Object.fromEntries((await google.grupo.listar()).map(gr => [gr.email, gr])),
          // {path1: ou, path2: ou, etc.}. Relación de todas las ou existentes.
-         ous = Object.fromEntries((await google.ou.listar()).result.organizationUnits.map(ou => [ou.orgUnitPath, ou]));
+         ous = Object.fromEntries((await google.ou.listar()).result.organizationUnits.map(ou => [ou.name, ou]));
 
    // Intenta averiguar los IDs existentes y crea los grupos y ou inexistentes.
    async function vuelta(seed) {
@@ -28,14 +28,17 @@ export async function inicializar() {
       const ous_inexistentes = {};
       for(const ou of Object.values(seed.ou)) {
          if(ou.name && !ou.name.startsWith("BORRAR-")) ou.name = "BORRAR-" + ou.name;  // TODO: Eliminar esto.
-         try { ou.orgUnitId = ous[`/${ou.name}`].orgUnitId; }
-         catch(error) {
-            ous_inexistentes[`/${ou.name}`] = ou;
+         try { 
+            ou.orgUnitId = ous[ou.name].orgUnitId;
+            ou.orgUnitPath = ous[ou.name].orgUnitPath;
          }
-         batch.add(ou.orgUnitId?google.ou.actualizar(ou):google.ou.crear(ou));
+         catch(error) {
+            ous_inexistentes[ou.name] = ou;
+         }
+         batch.add(google.ou.operar(ou));
       }
 
-      // Contenedores: apuntamos IDs o los marcomos como inexistentes.
+      // Contenedores: apuntamos IDs o los marcamos como inexistentes.
       const cont = seed.contenedores,
             inexistentes = {};
       for(const attr in cont) {
@@ -61,30 +64,32 @@ export async function inicializar() {
          batch.add(google.grupo.operar(dpto));
       }
 
-      const nocreados = {};
+      const nocreados = {
+         departamentos: [],
+         contenedores: {},
+         ou: {}
+      };
 
       // Apunta los identificadores de grupos y ous recientemente creados.
       for await(const [key, result] of batch) {
+         if(result.operacion === "actualizar") continue;
          // Ha habido un error en la creación del ou o el grupo.
          // Se apuntan tales errores para volver a intentarlo.
          if(!result.value) {
-            if(key.startsWith("/")) {
-               const ou = ous_inexistentes[key];
-               if(!ou) continue;
-               nocreados.ou = nocreados.ou || {};
-               nocreados.ou[key] = {name: key};
-            }
-            else {
+            if(key.includes("@")) {
                const dpto = inexistentes[key];
                if(!dpto) continue;
                if(dpto.description.startsWith("Departamento")) {
-                  nocreados.departamentos = nocreados.departamentos || []
                   nocreados.departamentos.push(dpto);
                }
                else {
-                  nocreados.contenedores = nocreados.contenedores || {}
                   nocreados.contenedores[key] = dpto;
                }
+            }
+            else {
+               const ou = ous_inexistentes[key];
+               if(!ou) continue;
+               nocreados.ou[key] = {name: key};
             }
             continue;
          }
@@ -109,7 +114,7 @@ export async function inicializar() {
    }
       
    function wait() {
-      return new Promise(resolve => setTimeout(() => resolve(true), parseInt(Math.random()*1000)));
+      return new Promise(resolve => setTimeout(() => resolve(true), parseInt(500 + Math.random()*1000)));
    }
 
    let contador = 0, nocreados = seed,
@@ -132,8 +137,6 @@ export async function inicializar() {
    }
 
    await batch;
-
-   console.log("DEBUG", nocreados, seed);
 
    if(cuantos_post > 0) {
       this.auth.fire("configerror", {pending: nocreados});
