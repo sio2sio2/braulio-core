@@ -299,6 +299,7 @@ function interfaz(client) {
          .then(response => {
                   appendPre(`${response.result.email}: OK`);
                   console.log("DEBUG", response);
+                  client.config.merge({departamentos: [response.additional.config]});
                },
                error => {
                   appendPre(`${dpto.email}: Falló`);
@@ -316,6 +317,7 @@ function interfaz(client) {
          .then(response => {
                   appendPre(`${response.result.email}: OK`);
                   console.log("DEBUG", response);
+                  client.config.merge({departamentos: [response.additional.config]});
                },
                error => {
                   appendPre(`${dpto.email}: Falló`);

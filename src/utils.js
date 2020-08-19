@@ -103,19 +103,64 @@ export function isObject(variable) {
 }
 
 /**
- * Mezcla de forma recursiva dos o más objetos.
+ * Mezcla de forma recursiva dos o más objetos asumiendo lo siguiente:
+ *
+ * + Si se comparan dos valores y alguno de ellos no es un objeto,
+ *   prevalece el segundo.
+ * + Si se comparan dos valores y ambos son objetos:
+ *
+ *   - Las propiedades del primero que no estén en el segundo, se conservan
+ *   - Las propiedades del segundo que no estén en el primero, se conservan.
+ *   - Si ambos objetos tienen una misma propiedad, el valor de la prppiedad
+ *     será el resultado de mezclar sus valores.
+ *
+ * Ahora bien, se puede proporcionar como contexto un objeto con la propiedad __proxy__.
+ * Esta propiedad permite definir mezclas personalizadas para propiedades concretas.
+ * Por ejemplo:
+ *
+ * { 
+ *    __proxy__: {
+ *       "x.y": (a, b) => a + b,
+ *       "x.z": (a, b) => a
+ *    }
+ * }
+ *
+ * expresa que la propiedad "y" dentro de la propiedad "x" de los objetos proporcionados
+ * se obtiene sumando los valores de ambas propiedades; mientras que la propiedad "z"
+ * denro de la propiedad "z" se obtiene haciendo prevalecer el valor del primer objeto,
+ * en vez del segundo que es el comprotamiento predeterminado.
+ *
  */
 export function merge(target, ...sources) {
+   let tracking = null;
+   if(this && this["__proxy__"]) tracking = Object.assign({}, this)
+
    if(sources.length === 0) return target;
    const source = sources.shift();
 
-   if(!isObject(source) || !isObject(target)) return source;
+   if(tracking && tracking["__proxy__"]['']) {
+      return tracking["__proxy__"][''](target, source);
+   }
+   else if(!isObject(source) || !isObject(target)) return source;
    else {
       for(const [key, value] of Object.entries(source)) {
-         if(target.hasOwnProperty(key)) target[key] = merge(target[key], value);
+         if(target.hasOwnProperty(key)) {
+            let subtracking = null;
+            if(tracking) {
+               // Eliminamos las transformaciones ajenas a esta propiedad
+               // y, ademas, simplificamos path que representa la clave.
+               // Por ejemplo, si tenemos una ruta "a.x" y nos adentramos en
+               // la propiedad "a", dejamos la ruta en "x".
+               const proxy = Object.entries(tracking["__proxy__"])
+                                .filter(([k, v]) => k.startsWith(`${key}.`) || k === key)
+                                   .map(([k, v]) => [k.slice(key.length+1), v]);
+               subtracking = {__proxy__: Object.fromEntries(proxy)};
+            }                                               
+            target[key] = merge.call(subtracking, target[key], value);
+         }
          else target[key] = value;
       }
    }
    
-   return merge(target, ...sources);
+   return merge.call(tracking, target, ...sources);
 }

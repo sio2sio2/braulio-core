@@ -127,7 +127,6 @@ Config.prototype.init = function() {
  */
 Config.prototype.set = function(content, merge) {
    if(this.id === null) throw new Error("Configuración no inicializada");
-   if(merge) content = merge({}, this.content, content);
 
    if(content) {
       gapi.client.request({
@@ -136,7 +135,8 @@ Config.prototype.set = function(content, merge) {
          body: JSON.stringify(mrproper(JSON.parse(JSON.stringify(content)))),
       }).then(response => {
          const evento = this.status === "PRECONFIG"?"preconfig":"savedconfig";
-         this._content = content;
+         if(merge) this.merge(content);
+         else this._content = content;
          this.auth.fire(evento);
       });
    }
@@ -199,6 +199,23 @@ Config.prototype.removeAll = function() {
    });
 }
 */
+
+/**
+ * Mezcla de forma inteligente la configuración con configuraciones
+ * parciales suministradas como argumentos.
+ */
+Config.prototype.merge = function(...configs) {
+   function mergeDpto(arr1, arr2) {
+      arr1 = Object.fromEntries(arr1.map(e => [e.email, e]));
+      if(arr1[undefined]) throw new Error("Todos los departamentos deben tener dirección de email");
+      arr2 = Object.fromEntries(arr2.map(e => [e.email, e]));
+      if(arr2[undefined]) throw new Error("Todos los departamentos deben tener dirección de email");
+
+      return Object.values(merge(arr1, arr2));
+   }
+
+   return merge.call({__proxy__: {departamentos: mergeDpto}}, this.content, ...configs);
+}
 
 
 /**

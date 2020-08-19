@@ -98,7 +98,7 @@ class Departamento extends BaseComun(google.clase.Groups) {
             catch(error) { return fallback(error); }
 
             // Incluye información adicional para poder actualizar la configuración.
-            response.addtional = {config: Object.assign({}, orig, {email: response.result.email})};
+            response.additional = {config: Object.assign({}, orig, {email: response.result.email})};
             return callback(response);
          }
       });
