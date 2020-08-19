@@ -45,10 +45,8 @@ class Departamento extends BaseComun(google.clase.Groups) {
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
 
-            let response;
-
             // Creación
-            try { response = await request; }
+            try { var response = await request; }
             catch(error) { return fallback(error); }
 
             const extra = response.additional = {};
@@ -95,10 +93,8 @@ class Departamento extends BaseComun(google.clase.Groups) {
       const request = super.actualizar(dpto);
       return Object.assign({}, request, {
          then: async (callback, fallback) => {
-            let response;
-
             // Actualiza el departamento.
-            try { response = await request; }
+            try { var response = await request; }
             catch(error) { return fallback(error); }
 
             // Incluye información adicional para poder actualizar la configuración.

@@ -90,11 +90,10 @@ Batch.prototype[Symbol.asyncIterator] = async function*() {
    let index = 0;
    while(index < this._buffer.length) {
       const [id, request, formatter] = this._buffer[index++];
-      let ok;
-      try {
-         ok = formatter(await request);
-      }
+
+      try { var ok = formatter(await request); }
       catch(error) { ok = formatter(error); }
+      
       ok.index = index;
       yield [id, ok];
    }
@@ -126,29 +125,27 @@ Batch.prototype.then = async function(callback) {
  *       10, cualquier otro error. raw contiene el error crudo.
  */
 export function formatear(operacion, response) {
-   let res, obj;
-
    switch(operacion) {
       case "crear":
-         obj = {
+         var obj = {
             codigo: 409,
             res: 1
          }
          break;
       case "actualizar":
-         obj = {
+         var obj = {
             codigo: 404,
             res: 2
          }
          break;
       case "borrar":
-         obj = {
+         var obj = {
             codigo: 404,
             res: 3
          }
          break;
       default:
-         obj = {
+         var obj = {
             codigo: 404,
             res: 4
          }

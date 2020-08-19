@@ -98,11 +98,9 @@ class Profesor extends BaseComun(google.clase.Users) {
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
 
-            let response;
-
             // Creación
             try {
-               response = await request;
+               var response = await request;
             }
             catch(error) { return fallback(error); }
            
@@ -179,9 +177,8 @@ class Profesor extends BaseComun(google.clase.Users) {
                oldtutoria = this.obtenerValor(`tutoria`, oldprofesor);
             }
 
-            let response;
             try {
-               response = await request;
+               var response = await request;
             }
             catch(error) { return fallback(error); }
             
@@ -220,8 +217,8 @@ class Profesor extends BaseComun(google.clase.Users) {
                }
             }
 
-            const tutores = config.contenedores.tutores.id;
             try {
+               const tutores = config.contenedores.tutores.id;
                if(oldtutoria && tutoria === null) {
                   extra.tutoria = await google.miembro.borrar(tutores, response.result.id);
                }

@@ -491,7 +491,7 @@ alguno de los nombres de grupo inutilice la aplicación. Al completarse con
   disparará el evento *onready*.
 - Si no lo encuentra, disparará el evento *noconfig*, generará un fichero
   de configuración predeterminado y disparará el evento *preconfig*, útil por
-  si se quiere habilitar que el usaurio pueda modificar ese fichero predefinido.
+  si se quiere habilitar que el usuario pueda modificar ese fichero predefinido.
 
   ~~~javascript
 
@@ -524,7 +524,7 @@ con algunos atributos y métodos útiles:
 | ------------------------------ | --------------------------------------------|
 | ``config.content``             | Objeto con la configuración.                |
 | ``config.id``                  | Identificador del fichero de configuración. |
-| ``config.status``              | Devuelve el estadoo: *PRECONFIG*, *READY*   |
+| ``config.status``              | Devuelve el estado: *PRECONFIG*, *READY*.   |
 | ``config.set(content, merge)`` | Guarda la nueva configuración.              |
 | ``config.remove()``            | Elimina la configuración.                   |
 
