@@ -525,24 +525,60 @@ con algunos atributos y métodos útiles:
 | ``config.content``             | Objeto con la configuración.                |
 | ``config.id``                  | Identificador del fichero de configuración. |
 | ``config.status``              | Devuelve el estado: *PRECONFIG*, *READY*.   |
-| ``config.set(content, merge)`` | Guarda la nueva configuración.              |
+| ``config.set(content, merge)`` | Guarda una nueva configuración.             |
+| ``config.merge(adicional)``    | Añade configuración adicional.              |
 | ``config.remove()``            | Elimina la configuración.                   |
 
-Es importante tener presente tres cosas:
+Es importante tener presente cuatro cosas:
 
-1. El objeto que debe pasarse a ``config.set()`` se usará sin modificaciones
-   para dar valor a ``config.content`` y, convenientemente depurado, para
-   guardarse en el *Drive*.  La depuración consistirá en eliminar nombres y
-   descripciones y dejar sólo los identificadores. El argumento ``merge`` a
-   verdadero hace que el contenido suministrado no sustitutya al actual, sino
-   que se añada a éste.
+1. Una configuración completa tendrá estado *READY*; mientras que una
+   configuración que se está áun generando tendrá estado *PRECONFIG*.
+
+1. ``config.merge(adicional)`` mezcla la configuración actual (accesible
+    a través de ``config.content`` con la proporcionada como argumento).
+    Al mezclar los departamentos, el método es inteligente y sólo
+    mezcla información de un mismo departamento. Para borrar un departamento,
+    basta con poner su identificador a *null*. Por ejemplo, esto:
+
+    ~~~javascript
+
+       config.merge({
+         // El resto de propiedades quedará igual, pues no indicamos nada.
+          departamentos: [
+             {
+               id: null,
+               email: "lengua@miinstituto.com"
+             }
+          ]
+       });
+
+    ~~~
+
+    borrará el departamento de lengua de la configuración (que no de G-Suite).
+    El método identifica los departamento con su dirección de correo, por lo
+    que para que funcione es necesario que todos la tengan expresa.
+
+1. ``config.set()`` guarda la configuración en el *Drive*:
+
+   + Si no se le proporciona nada, guardará el propio contenido de la
+     configuración (``config.content``).
+   + Si se le proporciona contenido, y el argumento ``merge`` se evalúa
+     a falso, éste sustituirá totalmente al que ya haya (el que se puede
+     consultar con ``config.content``).
+   + Si se le proporciona contenido y el argumento ``merge`` se evalúa a
+     verdadero, se mezcla este contenido con el ya existente. Por tanto,
+     es equivalente a:
+
+      ~~~javascropt
+
+         nayordomo.config.merge(content);  // Mezcla.
+         mayordomo.config.set();           // Guarda en disco.
+
+      ~~~
 
 1. ``config.remove()`` elimina exclusivamente el fichero de configuración, pero
    no los grupos o las unidades organizativas declaradas en tal fichero. Si se
    desea eliminar esa estructura habrá de llevarlo acabo de forma independiente.
-
-1. Una configuración completa tendrá estado *READY*; mientras que una
-   configuración que se está áun generando tendrá estado *PRECONFIG*.
 
 ### API de manipulación
 

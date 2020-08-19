@@ -132,25 +132,27 @@ export function isObject(variable) {
  *
  */
 export function merge(target, ...sources) {
-   let tracking = null;
+   let tracking = null, mix;
    if(this && this["__proxy__"]) tracking = Object.assign({}, this)
 
    if(sources.length === 0) return target;
    const source = sources.shift();
 
    if(tracking && tracking["__proxy__"]['']) {
-      return tracking["__proxy__"][''](target, source);
+      mix = tracking["__proxy__"][''](target, source);
    }
-   else if(!isObject(source) || !isObject(target)) return source;
+   else if(!isObject(source)) {
+      // Se obvia "source", cuando es null o indefined,
+      // y estamos comparando en el primer nivel (sources.length>0).
+      if((source === null || source === undefined) && sources.length > 0) mix = target
+      else mix = source;
+   }
    else {
+      if(!isObject(target)) target = {}
       for(const [key, value] of Object.entries(source)) {
          if(target.hasOwnProperty(key)) {
             let subtracking = null;
             if(tracking) {
-               // Eliminamos las transformaciones ajenas a esta propiedad
-               // y, ademas, simplificamos path que representa la clave.
-               // Por ejemplo, si tenemos una ruta "a.x" y nos adentramos en
-               // la propiedad "a", dejamos la ruta en "x".
                const proxy = Object.entries(tracking["__proxy__"])
                                 .filter(([k, v]) => k.startsWith(`${key}.`) || k === key)
                                    .map(([k, v]) => [k.slice(key.length+1), v]);
@@ -160,7 +162,8 @@ export function merge(target, ...sources) {
          }
          else target[key] = value;
       }
+      mix = target;
    }
    
-   return merge.call(tracking, target, ...sources);
+   return merge.call(tracking, mix, ...sources);
 }

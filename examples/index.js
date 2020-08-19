@@ -334,6 +334,7 @@ function interfaz(client) {
          .then(response => {
                   appendPre(`${dpto}: OK`);
                   console.log("DEBUG", response);
+                  client.config.merge({departamentos: [{id: null, email: `${dpto}@${client.params.hosted_domain}`}]})
                },
                error => {
                   appendPre(`${dpto}: Falló`);

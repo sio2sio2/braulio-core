@@ -33,19 +33,6 @@ export default Base => class extends Base {
       }
    }
 
-   // Mezcla dos o más esquemas.
-   mergeSchemas(target, ...sources) {
-      const schemas = {};
-      for(const obj of [target, ...sources]) {
-         for(const [key, fields] of Object.entries(obj || {})) {
-            schemas[key] = schemas[key] || [];
-            schemas[key].push(fields);
-         }
-      }
-
-      return Object.fromEntries(Object.entries(schemas).map(([k, v]) => [k, Object.assign(...v)]));
-   }
-
    obtener(entidad) {
       const args = this instanceof clase.Users?{projection: "custom", customFieldMask: this.schema}:{};
       return super.obtener(entidad, args);

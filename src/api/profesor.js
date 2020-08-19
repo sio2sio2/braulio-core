@@ -2,6 +2,7 @@ import * as google from "./google";
 import {fqda, fallback as fallback_default} from "./misc.js";
 import Batch from "./batch.js";
 import BaseComun from "./base.js"
+import {merge} from "../utils.js"
 
 
 class Profesor extends BaseComun(google.clase.Users) {
@@ -51,7 +52,7 @@ class Profesor extends BaseComun(google.clase.Users) {
       if(puesto) esquema.puesto = puesto;
       if(tutoria !== undefined) esquema.tutoria = tutoria;
       if(Object.keys(esquema).length > 0) {
-         profesor.customSchemas = this.mergeSchemas(profesor.customSchemas, {[this.schema]: esquema});
+         profesor.customSchemas = merge(profesor.customSchemas, {[this.schema]: esquema});
       }
 
       return profesor;

@@ -121,12 +121,14 @@ Config.prototype.init = function() {
  *    Si el contenido es nulo, se desencadena se genera el fichero
  *    a partir de la semilla y se dispara "preconfig". De lo contrario,
  *    se guarda y se desencadena "saveconfig".
+ *    Si es undefined, se guarda en disco el contenido actual.
  *
  * @param {Boolean} merge: Si se mezcla el contenido proporcionado en el primer
  *    parámetro con el actual, en vez de sustituirse.
  */
 Config.prototype.set = function(content, merge) {
    if(this.id === null) throw new Error("Configuración no inicializada");
+   if(content === undefined) content = this.content;
 
    if(content) {
       gapi.client.request({
@@ -201,8 +203,8 @@ Config.prototype.removeAll = function() {
 */
 
 /**
- * Mezcla de forma inteligente la configuración con configuraciones
- * parciales suministradas como argumentos.
+ * Mezcla de forma inteligente la configuración con
+ * configuraciones parciales suministradas como argumentos.
  */
 Config.prototype.merge = function(...configs) {
    function mergeDpto(arr1, arr2) {
@@ -211,7 +213,8 @@ Config.prototype.merge = function(...configs) {
       arr2 = Object.fromEntries(arr2.map(e => [e.email, e]));
       if(arr2[undefined]) throw new Error("Todos los departamentos deben tener dirección de email");
 
-      return Object.values(merge(arr1, arr2));
+      // Si algún departamento tiene identificador nulo, significa que se quiere borrar
+      return Object.values(merge(arr1, arr2)).filter(dpto => dpto.id !== null);
    }
 
    return merge.call({__proxy__: {departamentos: mergeDpto}}, this.content, ...configs);
