@@ -13,7 +13,7 @@ export default Base => class extends Base {
    get identificador() { throw new Error("Atributo abstracto"); }
 
    // TODO: Hay que obtener este valor de this.config.
-   get schema() { return this.identificador; }
+   get schema() { return this.config.content.esquemas[this.identificador].schemaName; }
    get organizador() { 
       // Los usuarios están agrupados por unidades organizativas,
       // los grupos por grupos contenedores.

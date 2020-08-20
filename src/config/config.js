@@ -236,6 +236,11 @@ function mrproper(config) {
       delete config.orgUnitPath;
       delete config.name;
    }
+   if(config.schemaId) {
+      delete config.displayName;
+      delete config.schemaName;
+      delete config.fields;
+   }
    for(const attr in config) {
       if(!config[attr]) continue;
       switch(config[attr].constructor) {
@@ -259,8 +264,8 @@ function getInfo(config, deep, res) {
    deep = deep || 0;
    res = res || {};
 
-   if(config.id || config.orgUnitId) {
-      res[config.id || config.orgUnitId] = config;
+   if(config.id || config.orgUnitId || config.schemaId) {
+      res[config.id || config.orgUnitId || config.schemaId] = config;
    }
    for(const attr in config) {
       switch(config[attr].constructor) {
@@ -277,8 +282,11 @@ function getInfo(config, deep, res) {
 
    const batch = gapi.client.newBatch();
    for(const id in res) {
-      if(res[id].id) batch.add(google.grupo.obtener(id), {id: id});
-      else batch.add(google.ou.obtener(id), {id: id});
+      if(res[id].id) var tipo = "grupo";
+      else if(res[id].orgUnitId) var tipo = "ou";
+      else var tipo = "esquema";
+
+      batch.add(google[tipo].obtener(id), {id: id});
    }
 
    return new Promise((resolve, reject) => {
@@ -286,10 +294,9 @@ function getInfo(config, deep, res) {
          for(let [id, result] of Object.entries(response.result)) {
             if(result.error) reject(`Imposible obtener la información del grupo con ID ${id}`);
             result = result.result;
-            if(result.email) res[id].email = result.email;
-            if(result.name) res[id].name = result.name;
-            if(result.description) res[id].description = result.description;
-            if(result.orgUnitPath) res[id].orgUnitPath = result.orgUnitPath;
+            for(const campo of ["email", "name", "description", "orgUnitPath", "displayName", "fields", "schemaName"]) {
+               if(result[campo]) res[id][campo] = result[campo];
+            }
          }
          resolve(config);
       }).catch(error => {

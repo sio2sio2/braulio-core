@@ -250,7 +250,7 @@ class Profesor extends BaseComun(google.clase.Users) {
 
       profesor = {
          customSchemas: {
-            [this.schema]: { cese: fecha , puesto: null }
+            [this.schema]: { cese: fecha, puesto: null, tutoria: null }
          }
       }
 

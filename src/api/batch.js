@@ -95,6 +95,7 @@ Batch.prototype[Symbol.asyncIterator] = async function*() {
       catch(error) { ok = formatter(error); }
       
       ok.index = index;
+      ok.request = request;
       yield [id, ok];
    }
    this._done = true;

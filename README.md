@@ -597,6 +597,19 @@ clase) directamente a través de los objetos:
 | ``api.dpto``     | Métodos de manipulación de departamentos.   |
 | ``api.clase``    | Métodos de manipulación de grupos de clase. |
 
+Para manipular **profesores** los métodos disponibles son los siguientes:
+
+| Métodos                           | Descripción                                       |
+|---------------------------------- | ------------------------------------------------- |
+| ``profesor.listar(args)``         | Lista todos los profesores.                       |
+| ``profesor.crear(info)``          | Crea un nuevo profesor.                           |
+| ``profesor.actualizar(info)``     | Actualiza un profesor.                            |
+| ``profesor.borrar(id)``           | Borra un profesor.                                |
+| ``profesor.operar(info)``         | Crea, actualiza o borrar según el caso.           |
+| ``profesor.cesar(id, fecha)``     | Cesa un profesor.                                 |
+| ``profesor.obtenerDpto(puesto)``  | Devuelve el grupo de dpto asociado al puesto.     |
+| ``profesor.grupos(id)``           | Lista los grupos a los que pertenece un profesor. |
+
 
 #### Manipulación a bajo nivel
 

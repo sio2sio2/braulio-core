@@ -18,11 +18,24 @@ export async function inicializar() {
          // {email1: grupo, email2: grupo, etc.}: Relación de grupos existentes.
          existentes = Object.fromEntries((await google.grupo.listar()).map(gr => [gr.email, gr])),
          // {path1: ou, path2: ou, etc.}. Relación de todas las ou existentes.
-         ous = Object.fromEntries((await google.ou.listar()).result.organizationUnits.map(ou => [ou.name, ou]));
+         ous = Object.fromEntries((await google.ou.listar()).result.organizationUnits.map(ou => [ou.name, ou])),
+         esquemas = Object.fromEntries((await google.esquema.listar()).result.schemas.map(sc => [sc.schemaName, sc]));
 
    // Intenta averiguar los IDs existentes y crea los grupos y ou inexistentes.
    async function vuelta(seed) {
       const batch = new Batch();
+
+      // Esquemas de usuario: apuntamos IDs o los marcamos como inexistentes.
+      const esq_inexistentes = {}
+      for(const sc of Object.values(seed.esquemas)) {
+         try {
+            sc.schemaId = esquemas[sc.schemaName].schemaId;
+         }
+         catch(error) {
+            esq_inexistentes[sc.schemaName] = sc;
+         }
+         batch.add(google.esquema.operar(sc));
+      }
 
       // Unidades organizativas: apuntamos IDs o las marcamos como inexistentes.
       const ous_inexistentes = {};
@@ -67,39 +80,42 @@ export async function inicializar() {
       const nocreados = {
          departamentos: [],
          contenedores: {},
-         ou: {}
+         ou: {},
+         esquemas: {}
       };
+
+      await batch;
 
       // Apunta los identificadores de grupos y ous recientemente creados.
       for await(const [key, result] of batch) {
          if(result.operacion === "actualizar") continue;
-         // Ha habido un error en la creación del ou o el grupo.
+         // Ha habido un error en la creación de la entidad.
          // Se apuntan tales errores para volver a intentarlo.
-         if(!result.value) {
-            if(key.includes("@")) {
-               const dpto = inexistentes[key];
-               if(!dpto) continue;
-               if(dpto.description.startsWith("Departamento")) {
+         switch (result.request.entidad) {
+            case "Groups":
+               const grupo = inexistentes[key];
+               if(!grupo) continue;
+               if(result.value) grupo.id = result.value.id;
+               else if(dpto.description.startsWith("Departamento")) {
                   nocreados.departamentos.push(dpto);
                }
-               else {
-                  nocreados.contenedores[key] = dpto;
-               }
-            }
-            else {
+               else nocreados.contenedores[key] = dpto;
+               break;
+            case "OrgUnits":
                const ou = ous_inexistentes[key];
                if(!ou) continue;
-               nocreados.ou[key] = {name: key};
-            }
-            continue;
-         }
-         if(result.value.email) {
-            if(!inexistentes[result.value.email]) continue;
-            inexistentes[result.value.email].id = result.value.id;
-         }
-         else {
-            if(!ous_inexistentes[result.value.orgUnitPath]) continue;
-            ous_inexistentes[result.value.orgUnitPath].orgUnitId = result.value.orgUnitId;
+               if(result.value) ou.orgUnitId = result.value.orgUnitId;
+               else nocreados.ou[key] = ou;
+               break;
+            case "Schemas":
+               const sc = esq_inexistentes[key];
+               if(!sc) continue;
+               if(result.value) sc.schemaId = result.value.schemaId;
+               else nocreados.esquemas[key] = sc;
+               break;
+            default:
+               console.error(`${result.request.tipo}: Tipo de entidad desconocido.`)
+               continue
          }
       }
 
@@ -109,7 +125,8 @@ export async function inicializar() {
    function contarEntidades(seed) {
       return Object.keys(seed.ou || {}).length + 
                            (seed.departamentos || []).length + 
-                              Object.keys(seed.contenedores || {}).length;
+                              Object.keys(seed.contenedores || {}).length +
+                                 Object.keys(seed.esquemas || {}).length;
 
    }
       

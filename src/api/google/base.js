@@ -54,6 +54,7 @@ class EntidadBase {
       const request = gapi.client.request(req);
       request.operacion = "obtener";
       request.id = id;
+      request.entidad = this.constructor.name;
 
       return request;
    }
@@ -68,6 +69,7 @@ class EntidadBase {
       });
       request.operacion = "crear";
       request.id = info[this.emailField];
+      request.entidad = this.constructor.name;
 
       return request;
    }
@@ -94,6 +96,7 @@ class EntidadBase {
       });
       request.operacion = "actualizar";
       request.id = id;
+      request.entidad = this.constructor.name;
 
       return request;
    }
@@ -111,6 +114,7 @@ class EntidadBase {
       });
       request.operacion = "borrar";
       request.id = id;
+      request.entidad = this.constructor.name;
 
       return request;
    }
@@ -206,7 +210,8 @@ class EntidadBase {
                catch(error) { return fallback(error); }
                return callback(lista);
          },
-         operacion: "listar"
+         operacion: "listar",
+         tipo: this.name
       }
    }
 
@@ -268,6 +273,7 @@ export class OuSchemas extends EntidadBase {
       });
 
       request.operacion = "listar";
+      request.tipo = this.constructor.name;
       return request;
    }
 }

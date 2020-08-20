@@ -22,6 +22,44 @@
          "name": "misc"
       }
    },
+   "esquemas": {
+      "claustro": {
+         "displayName": "Información adicional del profesor",
+         "schemaName": "profesor",
+         "fields": [
+            {
+               "fieldName": "puesto",
+               "fieldType": "STRING"
+            },
+            {
+               "fieldName": "tutoria",
+               "fieldType": "EMAIL"
+            },
+            {
+               "fieldName": "cese",
+               "fieldType": "DATE"
+            },
+            {
+               "fieldName": "sustituto",
+               "fieldType": "EMAIL"
+            }
+         ]
+      },
+      "alumnos": {
+         "displayName": "Información adicional del alumno",
+         "schemaName": "alumno",
+         "fields": [
+            {
+               "fieldName": "alta",
+               "fieldType": "DATE"
+            },
+            {
+               "fieldName": "baja",
+               "fieldType": "DATE"
+            }
+         ]
+      }
+   },
    "departamentos": [
       {
          "name": "Filosofía",

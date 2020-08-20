@@ -5,28 +5,6 @@ function interfaz(client) {
       });
 
       window.CLIENTE = client;
-
-      // PRUEBAS.
-      window.crearEsquema = function() {
-         client.api.google.esquema.crear({
-            displayName: "Mi primera esquema de profesor",
-            schemaName: "claustro",
-            fields: [
-               {
-                  fieldName: "puesto",
-                  fieldType: "STRING"
-               },
-               {
-                  fieldName: "tutoria",
-                  fieldType: "EMAIL", // Dirección de email del grupo del que es tutor.
-               },
-               {
-                  fieldName: "cese",
-                  fieldType: "DATE"
-               }
-            ]
-         }).then(resp => console.log(resp));
-      }
    });
 
    client.on("failed", function(e) {
