@@ -232,8 +232,12 @@ function interfaz(client) {
    document.getElementById("mp"). addEventListener("click", async function(e) {
       const profesor = {
          primaryEmail: "borrar-soyprofesor",
+         name: {
+            fullName: "Profesor borrable"
+         },
          puesto: "00590010",
-         tutoria: null
+         tutoria: null,
+         taquilla: 24
       }
 
       clearPre();

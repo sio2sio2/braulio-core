@@ -8,12 +8,6 @@ import {merge} from "../utils.js"
 class Profesor extends BaseComun(google.clase.Users) {
    get identificador() { return "claustro"; }
 
-   listar(args) {
-      const path = this.organizador.orgUnitPath || `/${this.organizador.name}`
-      args = Object.assign({query: `orgUnitPath=${path}`}, args);
-      return super.listar(args);
-   }
-
    /**
     * Devuelve la lista de grupos a los que pertenece el profesor
     *
@@ -43,14 +37,20 @@ class Profesor extends BaseComun(google.clase.Users) {
    modificarProfesor(profesor) {
       let puesto = profesor.puesto,
           tutoria = profesor.tutoria && fqda(profesor.tutoria),
+          taquilla = profesor.taquilla,
           esquema = {};
 
       profesor = Object.assign({}, profesor)
       delete profesor.puesto;
       delete profesor.tutoria;
+      delete profesor.taquilla;
 
       if(puesto) esquema.puesto = puesto;
       if(tutoria !== undefined) esquema.tutoria = tutoria;
+      if(taquilla !== undefined) {
+         esquema.taquilla = typeof taquilla === "number"?[taquilla]:taquilla;
+         if(esquema.taquilla) esquema.taquilla = esquema.taquilla.map(num => new Object({value: num}));
+      }
       if(Object.keys(esquema).length > 0) {
          profesor.customSchemas = merge(profesor.customSchemas, {[this.schema]: esquema});
       }
@@ -250,7 +250,7 @@ class Profesor extends BaseComun(google.clase.Users) {
 
       profesor = {
          customSchemas: {
-            [this.schema]: { cese: fecha, puesto: null, tutoria: null }
+            [this.schema]: { cese: fecha, puesto: null, tutoria: null, taquilla: null}
          }
       }
 

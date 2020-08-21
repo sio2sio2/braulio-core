@@ -42,6 +42,11 @@
             {
                "fieldName": "sustituto",
                "fieldType": "EMAIL"
+            },
+            {
+               "fieldName": "taquilla",
+               "fieldType": "INT64",
+               "multiValued": true
             }
          ]
       },
@@ -54,7 +59,7 @@
                "fieldType": "DATE"
             },
             {
-               "fieldName": "baja",
+               "fieldName": "cese",
                "fieldType": "DATE"
             }
          ]
