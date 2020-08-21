@@ -7,8 +7,8 @@ class OrgUnits extends OuSchemas {
    get customer() { return "customer/my_customer/"; }
 
    crear(info) {
-      const body = Object.assign({parentOrgUnitPath: "/", description: info.name}, info);
-      info.orgUnitPath = `/${info.name}`;
+      const body = Object.assign({description: info.name}, info);
+      if(!body.hasOwnProperty("orgUnitPath")) body.parentOrgUnitPath = "/";
       return super.crear(body);
    }
 }

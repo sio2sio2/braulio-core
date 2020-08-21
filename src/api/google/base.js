@@ -90,7 +90,7 @@ class EntidadBase {
       }
 
       const request = gapi.client.request({
-         path: `https://www.googleapis.com/admin/directory/v1/${this.tipo}/${id}`,
+         path: `https://www.googleapis.com/admin/directory/v1/${this.customer}${this.tipo}/${id}`,
          method: "PUT",
          body: info
       });

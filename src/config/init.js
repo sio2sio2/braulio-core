@@ -43,7 +43,7 @@ export async function inicializar() {
          if(ou.name && !ou.name.startsWith("BORRAR-")) ou.name = "BORRAR-" + ou.name;  // TODO: Eliminar esto.
          try { 
             ou.orgUnitId = ous[ou.name].orgUnitId;
-            ou.orgUnitPath = ous[ou.name].orgUnitPath;
+            ou.orgUnitPath = ou.orgUnitPath || ous[ou.name].orgUnitPath;
          }
          catch(error) {
             ous_inexistentes[ou.name] = ou;
@@ -104,7 +104,10 @@ export async function inicializar() {
             case "OrgUnits":
                const ou = ous_inexistentes[key];
                if(!ou) continue;
-               if(result.value) ou.orgUnitId = result.value.orgUnitId;
+               if(result.value) {
+                  ou.orgUnitId = result.value.orgUnitId;
+                  ou.orgUnitPath = result.value.orgUnitPath;
+               }
                else nocreados.ou[key] = ou;
                break;
             case "Schemas":
