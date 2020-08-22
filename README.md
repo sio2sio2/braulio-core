@@ -525,14 +525,19 @@ con algunos atributos y métodos útiles:
 | ``config.content``             | Objeto con la configuración.                |
 | ``config.id``                  | Identificador del fichero de configuración. |
 | ``config.status``              | Devuelve el estado: *PRECONFIG*, *READY*.   |
+| ``config.obtenerDpto(dpto)``   | Devuelve la info del dpto.                  |
 | ``config.set(content, merge)`` | Guarda una nueva configuración.             |
 | ``config.merge(adicional)``    | Añade configuración adicional.              |
 | ``config.remove()``            | Elimina la configuración.                   |
 
-Es importante tener presente cuatro cosas:
+Es importante tener presente cinco cosas:
 
 1. Una configuración completa tendrá estado *READY*; mientras que una
    configuración que se está áun generando tendrá estado *PRECONFIG*.
+
+1. El método ``config.obtenerDpto(dpto)`` devuelve la información completa
+   del departmanto contenida en la configuración. Para ello es necesario
+   suministrar o el identificador del grupo o su dirección de correo.
 
 1. ``config.merge(adicional)`` mezcla la configuración actual (accesible
     a través de ``config.content`` con la proporcionada como argumento).

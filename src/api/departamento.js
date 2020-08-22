@@ -67,20 +67,6 @@ class Departamento extends BaseComun(google.clase.Groups) {
       });
    }
 
-   // Obtiene la definición del departamento que hay en la configuración.
-   obtenerDepartamento(dpto) {
-      if(!this.config.content) return null;
-
-      for(const d of this.config.content.departamentos) {
-         if(dpto[this.idField] && dpto[this.idField] === d.id) return d;
-         if(dpto[this.emailField]) {
-            const email = dpto[this.emailField].split('@')[0];
-            if(email === d.email.split('@')[0]) return d;
-         }
-      }
-      return undefined;
-   }
-
    actualizar(dpto) {
       const orig = dpto;
 

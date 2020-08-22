@@ -18,7 +18,7 @@ class Profesor extends BaseComun(google.clase.Users) {
       return google.grupo.listar({userKey: profesor});
    }
 
-   obtenerDepartamento(puesto) {
+   obtenerDpto(puesto) {
       for(const dpto of this.config.content.departamentos) {
          for(let exp of dpto.puestos) {
             if(exp.startsWith("/")) {  // Expresión regular
@@ -80,7 +80,7 @@ class Profesor extends BaseComun(google.clase.Users) {
       const config = this.config.content,
             tutoria = profesor.tutoria,
             tutores = config.contenedores.tutores.id,
-            dpto = this.obtenerDepartamento(profesor.puesto);
+            dpto = this.obtenerDpto(profesor.puesto);
 
       profesor = Object.assign({
          password: "12341234",
@@ -181,7 +181,7 @@ class Profesor extends BaseComun(google.clase.Users) {
                   }
                   if(!oldpuesto) fallback("El profesor no pertenece a ningún departamento");
 
-                  puesto = this.obtenerDepartamento(puesto);
+                  puesto = this.obtenerDpto(puesto);
                   cambioDpto = oldpuesto !== puesto;
                }
             }

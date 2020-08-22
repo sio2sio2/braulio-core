@@ -230,7 +230,7 @@ class EntidadBase {
    }
 
    /**
-    * Trata la cadena, de namera que si es una dirección
+    * Trata la cadena, de manera que si es una dirección
     * no cualificada, le añade el dominio.
     */
    static parseID(string) {

@@ -221,6 +221,29 @@ Config.prototype.merge = function(...configs) {
 }
 
 
+/** 
+ * Obtiene la definición del departamento que hay en la configuración.
+ *
+ * @param {String} dpto: Identificador o dirección de correo del departamento.
+ */
+Config.prototype.obtenerDpto = function(dpto) {
+      const isID = google.clase.Groups.isID(dpto);
+      if(!isID) var email = dpto.split('@')[0];
+
+      for(const d of this.content.departamentos) {
+         try {
+            if(isID) { if(dpto === d.id) return d; }
+            else if(email === d.email.split('@')[0]) return d;
+         }
+         catch(error) {
+            const leyenda = isID?"identificadores":"direcciones de correo";
+            throw new Error(`La información de configuración carece de ${leyenda}`);
+         }
+      }
+      return undefined;
+}
+
+
 /**
  * Elimina de la configuración proporcionada
  * las dirección de email, las descripciones y los nombres
