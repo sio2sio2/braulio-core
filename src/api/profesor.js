@@ -159,36 +159,37 @@ class Profesor extends BaseComun(google.clase.Users) {
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
 
-            let cambioDpto = false,
-                oldprofesor, oldpuesto, oldtutoria;
+            let cambioDpto, cambioTutoria, oldpuesto;
 
-            // Los valores del esquema que no se proporcionan, no
-            // cambian al actualizar el profesor, por lo que en principio
-            // no es necesario obtener el esquema antiguo. Sin embargo,
-            // el cambio de puesto o de tutoría, pueden provocar cambios
-            // en la membresía, por lo que hay que cerciorarse de los cambios.
             if(puesto || tutoria !== undefined) {
-               try {
-                  const response = await this.obtener(profesor[this.idField] || profesor[this.emailField]);
-                  oldprofesor = response.result;
+               const grupos = await this.grupos(profesor[this.idField] || profesor[this.emailField]);
+
+               if(tutoria !== undefined) {
+                  const esTutor = grupos.filter(gr => gr.id === config.contenedores.tutores.id).length > 0;
+                  cambioTutoria = esTutor && tutoria === null || !esTutor && tutoria;
                }
-               catch(error) { return fallback(error); }
 
-               oldpuesto = this.obtenerValor(`puesto`, oldprofesor);
-               oldtutoria = this.obtenerValor(`tutoria`, oldprofesor);
+               if(puesto) {
+                  for(const grupo of grupos) {
+                     for(const dpto of config.departamentos) {
+                        if(dpto.id === grupo.id) {
+                           oldpuesto = grupo.id;
+                           break;
+                        }
+                     }
+                     if(oldpuesto) break;
+                  }
+                  if(!oldpuesto) fallback("El profesor no pertenece a ningún departamento");
+
+                  puesto = this.obtenerDepartamento(puesto);
+                  cambioDpto = oldpuesto !== puesto;
+               }
             }
 
-            try {
-               var response = await request;
-            }
+            // Actualizar el profesor.
+            try { var response = await request; }
             catch(error) { return fallback(error); }
             
-            if(puesto) {
-               if(oldpuesto) oldpuesto = this.obtenerDepartamento(oldpuesto);
-               if(puesto) puesto = this.obtenerDepartamento(puesto);
-               cambioDpto = oldpuesto !== puesto;
-            }
-
             const extra = response.additional = {
                dpto: {
                   borrar: null,
@@ -198,38 +199,36 @@ class Profesor extends BaseComun(google.clase.Users) {
             };
 
             if(cambioDpto) {
-               if(oldpuesto) {
-                  try {
-                     extra.dpto.borrar = await google.miembro.borrar(oldpuesto, response.result.id);
-                  }
-                  catch(error) {
-                     console.error(error);
-                     extra.dpto.borrar = error;
-                  }
+               try {
+                  extra.dpto.borrar = await google.miembro.borrar(oldpuesto, response.result.id);
                }
-               if(puesto) {
-                  try {
-                     extra.dpto.agregar = await google.miembro.agregar(puesto, response.result.id);
-                  }
-                  catch(error) {
-                     console.error(error);
-                     extra.dpto.agregar = error;
-                  }
+               catch(error) {
+                  console.error(error);
+                  extra.dpto.borrar = error;
+               }
+               try {
+                  extra.dpto.agregar = await google.miembro.agregar(puesto, response.result.id);
+               }
+               catch(error) {
+                  console.error(error);
+                  extra.dpto.agregar = error;
                }
             }
 
-            try {
-               const tutores = config.contenedores.tutores.id;
-               if(oldtutoria && tutoria === null) {
-                  extra.tutoria = await google.miembro.borrar(tutores, response.result.id);
+            if(cambioTutoria) {
+               try {
+                  const tutores = config.contenedores.tutores.id;
+                  if(tutoria) {
+                     extra,tutoria = await google.miembro.agregar(tutores, response.result.id);
+                  }
+                  else {
+                     extra.tutoria = await google.miembro.borrar(tutores, response.result.id);
+                  }
                }
-               else if(!oldtutoria && tutoria) {
-                  extra,tutoria = await google.miembro.agregar(tutores, response.result.id);
+               catch(error) { 
+                  console.error(error);
+                  extra.tutoria = error;
                }
-            }
-            catch(error) { 
-               console.error(error);
-               extra.tutoria = error;
             }
 
             return callback(response);

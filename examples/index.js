@@ -233,7 +233,7 @@ function interfaz(client) {
       const profesor = {
          primaryEmail: "borrar-soyprofesor",
          name: {
-            fullName: "Profesor borrable"
+            givenName: "Sabelotodo"
          },
          puesto: "00590010",
          tutoria: null,
