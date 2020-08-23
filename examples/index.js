@@ -210,6 +210,7 @@ function interfaz(client) {
                givenName: "Profesor",
                familyName: "Aburridamente Inteligente",
             },
+            jefe: true,
             puesto: "11590006",
             tutoria: "eso1a"
          },

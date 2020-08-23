@@ -23,12 +23,14 @@ class Profesor extends BaseComun(google.clase.Users) {
       let puesto = profesor.puesto,
           tutoria = profesor.tutoria && fqda(profesor.tutoria),
           taquilla = profesor.taquilla,
+          jefe = profesor.jefe,
           esquema = {};
 
       profesor = Object.assign({}, profesor)
       delete profesor.puesto;
       delete profesor.tutoria;
       delete profesor.taquilla;
+      delete profesor.jefe;
 
       if(puesto) esquema.puesto = puesto;
       if(tutoria !== undefined) esquema.tutoria = tutoria;
@@ -36,6 +38,8 @@ class Profesor extends BaseComun(google.clase.Users) {
          esquema.taquilla = typeof taquilla === "number"?[taquilla]:taquilla;
          if(esquema.taquilla) esquema.taquilla = esquema.taquilla.map(num => new Object({value: num}));
       }
+      if(jefe) esquema.jefe = true;
+
       if(Object.keys(esquema).length > 0) {
          profesor.customSchemas = merge(profesor.customSchemas, {[this.schema]: esquema});
       }
@@ -61,6 +65,7 @@ class Profesor extends BaseComun(google.clase.Users) {
     */
    crear(profesor) {
       const config = this.config.content,
+            detectarJefes = !profesor.noDetectarJefes,
             tutores = config.contenedores.tutores.id;
 
       profesor = Object.assign({
@@ -74,9 +79,11 @@ class Profesor extends BaseComun(google.clase.Users) {
          }
       }, profesor);
       profesor = this.modificarProfesor(profesor);
+      delete profesor.detectarJefes;
 
       const tutoria = this.obtenerCampo("tutoria", profesor),
-            puesto = this.obtenerCampo("puesto", profesor);
+            puesto = this.obtenerCampo("puesto", profesor),
+            jefe =  this.obtenerCampo("jefe", profesor);
 
       if(!puesto) throw new Error(`'${profesor[this.emailField]}' carece de puesto de desempeño`);
       
@@ -87,10 +94,14 @@ class Profesor extends BaseComun(google.clase.Users) {
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
 
-            // Creación
-            try {
-               var response = await request;
+            // Jefe: ¿es único?
+            if(jefe && detectarJefes) {
+               try { await comprobarJefes.call(this, dpto.id); }
+               catch(error) { return fallback(error); }
             }
+
+            // Creación
+            try { var response = await request; }
             catch(error) { return fallback(error); }
            
             const extra = response.additional = {};
@@ -135,11 +146,14 @@ class Profesor extends BaseComun(google.clase.Users) {
     *
     */
    actualizar(profesor) {
-      const config = this.config.content;
+      const config = this.config.content,
+            detectarJefes = !profesor.noDetectarJefes;
       profesor = this.modificarProfesor(profesor);
+      delete profesor.DetectarJefes;
 
       let puesto = this.obtenerCampo("puesto", profesor),
-          tutoria = this.obtenerCampo("tutoria", profesor);
+          tutoria = this.obtenerCampo("tutoria", profesor),
+          jefe = this.obtenerCampo("jefe", profesor)
 
       const request = super.actualizar(profesor);
       return Object.assign({}, request, {
@@ -169,6 +183,18 @@ class Profesor extends BaseComun(google.clase.Users) {
 
                   cambioDpto = olddpto !== dpto;
                }
+            }
+
+            if(jefe && detectarJefes) { // Hay que averiguar su puesto.
+               if(!puesto) {
+                  let info;
+                  try { info = await this.obtener(profesor[this.idField] || profesor[this.emailField]); }
+                  catch(error) { return fallback(error); }
+                  puesto = this.obtenerCampo("puesto", info);
+                  dpto = this.config.obtenerDpto({puesto: puesto});
+               }
+               try { await comprobarJefes.call(this, dpto.id); }
+               catch(error) { return fallback(error); }
             }
 
             // Actualizar el profesor.
@@ -250,10 +276,17 @@ class Profesor extends BaseComun(google.clase.Users) {
             // Copiamps la información del sustituido en el sustituto
             sustituto.customSchemas = merge(sustituto.customSchemas, sustituido.customSchemas);
 
+            // Si hereda el puesto de jefe de departanento, tenemos
+            // el problema  de que como primero añadimos el sustituto,
+            // el sustituido aún no se ha marcado como tal, y no puede
+            // haber dos jefes de departamento a la vez en activo.
+            // Así que primero lo creamos/actualizamos sin ese cargo.
+            const jefe = this.obtenerCampo("jefe", sustituto);
+            //if(jefe) delete sustituto.customSchemas[this.schema].jefe;
+            //if(jefe) sustituto.noDetectarJefes = true;
+
             // Creaomos o actualizamos el sustituto
-            try {
-               var response = await this.operar(sustituto);
-            }
+            try { var response = await this.operar(sustituto); }
             catch(error) { return fallback(error); }
 
             const extra = response.additional = {}
@@ -265,6 +298,22 @@ class Profesor extends BaseComun(google.clase.Users) {
                console.error(error);
                extra.sustituido = error;
             }
+
+            /*
+            if(jefe) {
+               sustituto.customSchemas[this.schema].jefe = true;
+               sustituto = {
+                  id: response.result.id,
+                  //customSchemas: sustituto.customSchemas
+                  customSchemas: { [this.schema]: { jefe: true }}
+               }
+               try { extra.jefe = await this.actualizar(sustituto) }
+               catch(error) {
+                  console.error(error);
+                  extra.jefe = error;
+               }
+            }
+            */
 
             return callback(response);
          }
@@ -363,6 +412,59 @@ class Profesor extends BaseComun(google.clase.Users) {
          }
       });
    }
+
+   // Añade activo y jefe.
+   listar(args) {
+      const jefe = args && args.jefe;
+      args = Object.assign({}, args);
+
+      const query = args.query?[args.query]:[]
+      if(args.activo) {
+         const hoy = new Date().toISOString().slice(0, 10);
+         query.push(`${this.schema}.cese>${hoy} ${this.schema}.sustituto=0`);
+      }
+      if(args.jefe) {
+         query.push(`${this.schema}.jefe=true`);
+      }
+      delete args.activo;
+      delete args.jefe;
+
+      if(query.length) args.query = query.join(" ");
+
+      const request = super.listar(args);
+      if(!jefe || jefe === true) return request;
+      else return Object.assign({}, request, {
+         operacion: request.operacion,
+         id: request.id,
+         then: async (callback, fallback) => {
+            fallback = fallback || fallback_default;
+
+            try { var response = await request; }
+            catch(error) { return fallback(error); }
+
+            const dpto = this.config.obtenerDpto(jefe);
+            return callback(response.filter(profesor => {
+               const puesto = this.obtenerCampo("puesto", profesor);
+               return dpto === this.config.obtenerDpto({puesto: puesto});
+            }));
+         }
+      });
+   } 
+
+}
+
+async function comprobarJefes(dptoID) {
+   try { var jefes = await this.listar({jefe: dptoID}); }
+   catch(error) { 
+      console.error(error);
+      jefes = [];
+   }
+   // Sólo queremos jefes que no han sido sustituidos
+   jefes = jefes.filter(jefe => this.obtenerCampo("sustituto", jefe) != "0");
+   if(jefes.length) {
+      throw new Error(`${jefes[0][this.emailField]} ya es jefe de ${dpto.name}`);
+   }
+   return jefes;
 }
 
 export default Profesor;

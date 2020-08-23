@@ -45,7 +45,7 @@
             },
             {
                "fieldName": "jefe",
-               "fieldType": "STRING"
+               "fieldType": "BOOL"
             },
             {
                "fieldName": "taquilla",

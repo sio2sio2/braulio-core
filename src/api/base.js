@@ -47,13 +47,7 @@ export default Base => class extends Base {
             query = [args.query || ""];
 
       query.push(`orgUnitPath=${path}`);
-      if(args.activo) {
-         query.push(`${this.schema}.cese>${hoy} ${this.schema}.sustituto=0`);
-      }
-      else if(args.cesado) {
-         query.push(`${this.schema}.cese<=${hoy}`);
-      }
-      delete args.activo;
+      if(args.cesado) query.push(`${this.schema}.cese<=${hoy}`);
       delete args.cesado;
       args.query = query.join(" ");
 

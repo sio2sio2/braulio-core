@@ -279,9 +279,7 @@ uso](https://github.com/sio2sio2/braulio-core/tree/master/examples).
 
 ## API
 
-### Braulio
-
-#### Inicialización
+### Inicialización
 
 La inicialización podemos dividirla en tres tareas:
 
@@ -343,7 +341,7 @@ La inicialización podemos dividirla en tres tareas:
   desencadenando los eventos correspondientes (razón por la cual debía
   estar definido qué hacerse antes de utilizar el método).
 
-#### Autenticación
+### Autenticación
 
 La autenticación tiene asociados dos métodos:
 
@@ -387,7 +385,7 @@ realizarse tras la autenticación, por lo que al desencadenarse el evento
 **onready**, podemos estar seguros de que la aplicación ya está lista para que
 el usuario interactúe plenamente con ella.
 
-#### Eventos
+### Eventos
 
 Ya se han enumerado [todos los eventos reconocibles](#eventos) y cuándo se
 disparan. Es, sin embargo, pertinente profundizar en ellos.
@@ -484,6 +482,18 @@ administrador y que tiene esta estructura:
          "id": "### Identificador del grupo de Lenguas Clásicas ###",
          "puestos": [ "00590002" , "00590003" ]
       }
+   ],
+   "oferta": [
+      {
+         "descripcion": "Enseñanza Secundaria Obligatoria",
+         "nombre": "ESO",
+         "abreviatura": "ESO"
+      },
+      {
+         "descripcion": "Bachillerato",
+         "nombre": "Bacbillerato",
+         "abreviatura": "Bac"
+      }
    ]
 }
 
@@ -500,6 +510,11 @@ alguno de los nombres de grupo inutilice la aplicación. Al completarse con
 - Si no lo encuentra, disparará el evento *noconfig*, generará un fichero
   de configuración predeterminado y disparará el evento *preconfig*, útil por
   si se quiere habilitar que el usuario pueda modificar ese fichero predefinido.
+
+Además incluye la relación de enseñanzas que oferta el instituto que se usa como
+base para denominar los nombres de grupos: ``[Nivel][Abreviatura]-[Letra]``
+(p.e. *1ESO-A* o *2Bac-C*). La aplicación debería habilitar un mecanismo para
+añadir más enseñanzas.
 
   ~~~javascript
 
@@ -545,7 +560,24 @@ Es importante tener presente cinco cosas:
 
 1. El método ``config.obtenerDpto(dpto)`` devuelve la información completa
    del departmanto contenida en la configuración. Para ello es necesario
-   suministrar o el identificador del grupo o su dirección de correo.
+   suministrar:
+
+   * O una cadena con el identificador del grupo o su dirección de correo:
+
+     ~~~javascript
+
+     const matematicas = mayordomo.config.obtenerDpto("matematicas@miinstituto.com");
+
+     ~~~
+
+   * O un objeto de la forma ``{puesto: "CODIGO-PUESTO"}`` para obtener el
+     departamento a través de un puesto de desempeño:
+
+     ~~~javascript
+
+     const matematicas = mayordomo.config.obtenerDpto({puesto : "10590006"});
+
+     ~~~
 
 1. ``config.merge(adicional)`` mezcla la configuración actual (accesible
     a través de ``config.content`` con la proporcionada como argumento).
@@ -593,7 +625,7 @@ Es importante tener presente cinco cosas:
    no los grupos o las unidades organizativas declaradas en tal fichero. Si se
    desea eliminar esa estructura habrá de llevarlo acabo de forma independiente.
 
-### API de manipulación
+### Manipulación
 
 Los métodos de manipulación de las cuentas de G-Suite se encuentra dentro del
 objeto ``mayordomo.api``. Hay definidos unos métodos de manipulación de alto
@@ -613,11 +645,16 @@ clase) directamente a través de los objetos:
 | ``api.alumno``   | Métodos de manipulación de alumnos.         |
 | ``api.clase``    | Métodos de manipulación de grupos de clase. |
 
-Estas cuatro entidades disponen todas ellas de métodos para crearlas
-(``crear``), modificarlar (``actualizar``), borrarlas (``borrar``), obtener la
-información de una de ellas (``obtener``) o listar todas las disponibles
-(``listar``). Además, el método ``operar`` realiza la operación de crear,
-actualizar o bprar dependiendo de cómo pasemos su argumento. Lo trataremos en
+Estas cuatro entidades disponen todas ellas de métodos para:
+
++ crearlas (``crear``)
++ modificarlas (``actualizar``)
++ borrarlas (``borrar``)
++ obtener la información de una de ellas (``obtener``)
++ listar todas las disponibles (``listar``).
+
+Además, disponen del método ``operar`` que realiza la operación de crear,
+actualizar o borrar dependiendo de cómo pasemos su argumento. Lo trataremos en
 profundidad al analizar las cuatro a continuación, aunque los aspectos generales
 de estos módulos comunes se analizarán con la primera de ellas.
 
@@ -631,19 +668,24 @@ extra:
 - Desempeñan un puesto, lo cual les hace pertenecer indefectiblemente a un
   departamento.
 - Pueden ser tutores de algún curso.
+- Pueden ser jefes de departamento.
 - Pueden estar de baja y ser sustituidos por otro profesor.
 - Pueden disponer de una o varias taquillas.
 - PUedeb haber cesado en su puesto, pero seguir operativa la cuenta.
 
+<a name="campos-profesor"></a>
+
 Por ello, se ha definido un esquema de usuario con los siguientes campos:
 
 1. **puesto** cuyo valor es el código del puesto de desempeño.
-2. **tutoria** con la denominación del grupo de clase del que es tutor
+1. **tutoria** con la denominación del grupo de clase del que es tutor
    (p.e. 2ESO-A).
-3. **cese** cuyo valor la fecha de cese.
-4. **sustituto** cuyo valor será el identificador de la cuenta de profesor
-   que lo sustituya.
-5. **taquilla** que es un array que contiene los códigos de las taquillas
+1. **cese** cuyo valor es la fecha de cese. Todo profesor cuya fecha de cese
+   sea anterior o igual a la del día actual, se considera cesado.
+1. **sustituto** cuyo valor será el identificador de la cuenta de profesor
+   que lo sustituya. Si su valor es 0, el profesor no tiene sustituto.
+1. **jefe**, que será verdadero, si el profesor es el jefe de su departamento.
+1. **taquilla** que es un array que contiene los códigos de las taquillas
    asignadas.
 
 Aunque los campos forman parte del esquema *profesor* y pueden manipilarse como
@@ -666,18 +708,35 @@ Para manipular **profesores** los métodos disponibles son los siguientes:
 | ``profesor.grupos(id)``                      | Lista los grupos a los que pertenece un profesor. |
 
 ``profesor.listar(args)`` devuelve un objeto *thenable* con la lista de
-profesores. El argumento permite afinar la búsqueda añadiendo (parámetros a la
-búsqueda)[https://developers.google.com/admin-sdk/directory/v1/reference/users/list#parameters].
+profesores. El argumento permite afinar la búsqueda añadiendo [parámetros a la
+búsqueda](https://developers.google.com/admin-sdk/directory/v1/reference/users/list#parameters).
 Algunos, sin embargo, se aplican por defecto, como la proyección para ver los
-campos propios del profesor. o limitar la búsqueda a la unidad organizativa a la
-que pertenecen los profesores. A los parámetros estándar se añade ``cesado`` que
-es un atajo para mostrar los profesores que han cesado:
+[campos propios del profesor](#campos-profesor). o limitar la búsqueda a la
+unidad organizativa a la que pertenecen los profesores. A los parámetros
+estándar añade:
+
+* ``cesado`` que es un atajo para mostrar los profesores que han
+   cesado.
+
+* ``activo``, que es un atajo para mostrar los profesores en activo, esto es,
+  aquellos que ni han sido sustituidos ni han cesado.
+
+* ``jefe``, con valor *true*, muestra sólo aquellos profesores que son
+  jefes de departamento. Si el valor es el identificador o la dirección
+  de un departamento, entonces sólo mostrará la lista de jefes de ese
+  departmento (en principio único, que puede haber varios si un jefe ha sido
+  sustituido, ya que el sustituto hereda la condición de jefe de departamento).
 
 ~~~javascript
 
-const request = mayordomo.api.profesor.listar({cesado: true});
+let request = mayordomo.api.profesor.listar({cesado: true});
 request.then(cesados => {
    console.log("DEBUG", cesados);  // Array de profesores cesados.
+});
+
+request = mayordomo.api.profesor.listar({activo: true});
+request.then(activos => {
+   console.log("DEBUG", activos);  // Array de profesores activos
 });
 
 ~~~
