@@ -224,23 +224,42 @@ Config.prototype.merge = function(...configs) {
 /** 
  * Obtiene la definición del departamento que hay en la configuración.
  *
- * @param {String} dpto: Identificador o dirección de correo del departamento.
+ * @param {String|Object} dpto: Si es una cadena es el Identificador
+ *    o dirección de correo del departamento. Si es un objeto, se espera
+ *    de él que sea de la forma {puesto: "XXXXXX"}.
  */
 Config.prototype.obtenerDpto = function(dpto) {
-      const isID = google.clase.Groups.isID(dpto);
-      if(!isID) var email = dpto.split('@')[0];
+      if(typeof dpto === "string") {
+         const isID = google.clase.Groups.isID(dpto);
+         if(!isID) var email = dpto.split('@')[0];
 
-      for(const d of this.content.departamentos) {
-         try {
-            if(isID) { if(dpto === d.id) return d; }
-            else if(email === d.email.split('@')[0]) return d;
+         for(const d of this.content.departamentos) {
+            try {
+               if(isID) { if(dpto === d.id) return d; }
+               else if(email === d.email.split('@')[0]) return d;
+            }
+            catch(error) {
+               const leyenda = isID?"identificadores":"direcciones de correo";
+               throw new Error(`La información de configuración carece de ${leyenda}`);
+            }
          }
-         catch(error) {
-            const leyenda = isID?"identificadores":"direcciones de correo";
-            throw new Error(`La información de configuración carece de ${leyenda}`);
-         }
+         return undefined;
       }
-      return undefined;
+      else {
+         const puesto = dpto.puesto;
+         for(const dpto of this.content.departamentos) {
+            for(let exp of dpto.puestos) {
+               if(exp.startsWith("/")) {  // Expresión regular
+                  exp = exp.slice(1, -1);
+                  if(!exp.startsWith("^")) exp = "^" + exp;
+                  if(!exp.endsWith("$")) exp += "$";
+                  if(puesto.match(exp)) return dpto;
+               }
+               else if(puesto === exp) return dpto;
+            }
+         }
+         return undefined;
+      }
 }
 
 

@@ -18,21 +18,6 @@ class Profesor extends BaseComun(google.clase.Users) {
       return google.grupo.listar({userKey: profesor});
    }
 
-   obtenerDpto(puesto) {
-      for(const dpto of this.config.content.departamentos) {
-         for(let exp of dpto.puestos) {
-            if(exp.startsWith("/")) {  // Expresión regular
-               exp = exp.slice(1, -1);
-               if(!exp.startsWith("^")) exp = "^" + exp;
-               if(!exp.endsWith("$")) exp += "$";
-               if(puesto.match(exp)) return dpto.id;
-            }
-            else if(puesto === exp) return dpto.id;
-         }
-      }
-      throw new Error(`Puesto '${puesto}' desconocido`);
-   }
-
    // Convierte los atributos puesto y tutoria en keywords
    modificarProfesor(profesor) {
       let puesto = profesor.puesto,
@@ -95,7 +80,7 @@ class Profesor extends BaseComun(google.clase.Users) {
 
       if(!puesto) throw new Error(`'${profesor[this.emailField]}' carece de puesto de desempeño`);
       
-      const dpto = this.obtenerDpto(puesto);
+      const dpto = this.config.obtenerDpto({puesto: puesto});
       const request = super.crear(profesor);
 
       return Object.assign({}, request, {
@@ -112,7 +97,7 @@ class Profesor extends BaseComun(google.clase.Users) {
 
             // Dpto.
             try {
-               extra.dpto = await google.miembro.agregar(dpto, response.result.id);
+               extra.dpto = await google.miembro.agregar(dpto.id, response.result.id);
             }
             catch(error) { 
                extra.dpto = error;
@@ -179,7 +164,9 @@ class Profesor extends BaseComun(google.clase.Users) {
                   if(!olddpto) fallback("El profesor no pertenece a ningún departamento");
                   else olddpto = olddpto.id;
 
-                  dpto = this.obtenerDpto(puesto);
+                  try { dpto = this.config.obtenerDpto({puesto: puesto}).id; }
+                  catch(error) { return fallback(`Puesto '${puesto}' desconocido`); }
+
                   cambioDpto = olddpto !== dpto;
                }
             }
