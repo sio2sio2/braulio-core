@@ -71,7 +71,7 @@ function interfaz(client) {
       clearPre();
       client.api.profesor.listar().then(users => {
          users.forEach((user, i) => {
-            appendPre(`${i}. ${user.primaryEmail} (${user.name.fullName})`);
+            appendPre(`${i+1}. ${user.primaryEmail} (${user.name.fullName})`);
          });
       });
    });
@@ -203,30 +203,38 @@ function interfaz(client) {
    });
 
    document.getElementById("cp"). addEventListener("click", async function(e) {
-      const profesor = {
-         primaryEmail: "borrar-soyprofesor",
-         name: {
-            givenName: "Profesor",
-            familyName: "Aburridamente Inteligente",
-            fullName: "Profesor Aburridamente Inteligente"
+      const profesores = [
+         {
+            primaryEmail: "borrar-soyprofesor",
+            name: {
+               givenName: "Profesor",
+               familyName: "Aburridamente Inteligente",
+            },
+            puesto: "11590006",
+            tutoria: "eso1a"
          },
-         puesto: "11590006",
-         tutoria: "eso1a"
-      }
+         {
+            primaryEmail: "borrar-otroprofesor",
+            name: {
+               givenName: "Profesor",
+               familyName: "Que también es aburrido",
+            },
+            puesto: "00590001"
+         }
+      ]
 
       clearPre();
 
-      appendPre("Creación de un profesor:")
-      try {
-         const response = await client.api.profesor.crear(profesor);
-         console.log("DEBUG", response);
-         appendPre(`${response.result.primaryEmail}: OK`);
+      appendPre("Creación de profesores:")
+      const batch = new client.api.Batch();
+      profesores.forEach(p => batch.add(client.api.profesor.crear(p)));
+      let i=0;
+      for await(const [email, result] of batch) {
+         i++;
+         console.log("DEBUG", result);
+         const res = result.error.code === 0?"OK":"Fallo";
+         appendPre(`${i}. ${email}: ${res}`);
       }
-      catch(error) {
-         console.error("DEBUG", error);
-         appendPre(`${profesor.primaryEmail}: Falló`);
-      }
-
    });
 
    document.getElementById("mp"). addEventListener("click", async function(e) {
@@ -253,7 +261,7 @@ function interfaz(client) {
    });
 
    document.getElementById("zp").addEventListener("click", function(e) {
-      const profesor = "borrar-soyprofesor";
+      const profesor = "borrar-profesorsustituto";
 
       clearPre();
       appendPre("Cesando profesor:");
@@ -267,14 +275,46 @@ function interfaz(client) {
          });
    });
 
-   document.getElementById("bp"). addEventListener("click", function(e) {
-      const profesor = "borrar-soyprofesor";
+   document.getElementById("sp").addEventListener("click", function(e) {
+      const sustituto = {
+               primaryEmail: "borrar-profesorsustituto",
+               name: {
+                  givenName: "Profesor",
+                  familyName: "Sustituto",
+               },
+            },
+            sustituido = "borrar-soyprofesor";
 
       clearPre();
-      appendPre("Borrando profesor:");
-      client.api.profesor.borrar(profesor)
-         .then(response => appendPre(`${profesor}: OK`),
-               error => appendPre(`${profesor}: Falló`));
+      appendPre("Sustituyendo a un profesor por otro:");
+      client.api.profesor.sustituir(sustituto, sustituido)
+         .then(response => {
+            console.log("DEBUG", response);
+            appendPre(`${sustituto.primaryEmail}: OK`);
+         }, error => {
+            console.log("DEBUG", error);
+            appendPre(`${sustituto.primaryEmail}: Falló`);
+         })
+
+   });
+
+   document.getElementById("bp"). addEventListener("click", function(e) {
+      clearPre();
+      appendPre("Borrando profesores:");
+      // No hace falta la query, pero por si acaso se mezcla con los profesores reales.
+      client.api.profesor.listar({query: "email:borrar-"}).then(async profesores => {
+         const batch = new client.api.Batch();
+         for(const p of profesores) {
+            batch.add(client.api.profesor.borrar(p.primaryEmail));
+         }
+         let i=0;
+         for await(const [email, result] of batch) {
+            i++;
+            console.log("DEBUG", result);
+            const res = result.error.code === 0?"OK":"Fallo";
+            appendPre(`${i}. ${email}: ${res}`);
+         }
+      });
    });
 
    document.getElementById("cd"). addEventListener("click", function(e) {

@@ -75,16 +75,12 @@ class Profesor extends BaseComun(google.clase.Users) {
     * incluir al profesor.
     */
    crear(profesor) {
-      if(!profesor.puesto) throw new Error(`'${profesor[this.emailField]}' carece de puesto de desempeño`);
-      
       const config = this.config.content,
-            tutoria = profesor.tutoria,
-            tutores = config.contenedores.tutores.id,
-            dpto = this.obtenerDpto(profesor.puesto);
+            tutores = config.contenedores.tutores.id;
 
       profesor = Object.assign({
          password: "12341234",
-         orgUnitPath: config.ou.claustro.orgUnitPath,
+         orgUnitPath: config.ou[this.identificador].orgUnitPath,
          changePasswordAtNextLogin: true,
          customSchemas: {
             // Para buscar por "cese" es necesario que todos tengan una fecha.
@@ -94,7 +90,14 @@ class Profesor extends BaseComun(google.clase.Users) {
       }, profesor);
       profesor = this.modificarProfesor(profesor);
 
+      const tutoria = this.obtenerCampo("tutoria", profesor),
+            puesto = this.obtenerCampo("puesto", profesor);
+
+      if(!puesto) throw new Error(`'${profesor[this.emailField]}' carece de puesto de desempeño`);
+      
+      const dpto = this.obtenerDpto(puesto);
       const request = super.crear(profesor);
+
       return Object.assign({}, request, {
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
@@ -148,18 +151,17 @@ class Profesor extends BaseComun(google.clase.Users) {
     */
    actualizar(profesor) {
       const config = this.config.content;
-
-      let puesto = profesor.puesto,
-          tutoria = profesor.tutoria;
-
       profesor = this.modificarProfesor(profesor);
+
+      let puesto = this.obtenerCampo("puesto", profesor),
+          tutoria = this.obtenerCampo("tutoria", profesor);
 
       const request = super.actualizar(profesor);
       return Object.assign({}, request, {
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
 
-            let cambioDpto, cambioTutoria, oldpuesto;
+            let cambioDpto, cambioTutoria, olddpto, dpto;
 
             if(puesto || tutoria !== undefined) {
                const grupos = await this.grupos(profesor[this.idField] || profesor[this.emailField]);
@@ -171,18 +173,14 @@ class Profesor extends BaseComun(google.clase.Users) {
 
                if(puesto) {
                   for(const grupo of grupos) {
-                     for(const dpto of config.departamentos) {
-                        if(dpto.id === grupo.id) {
-                           oldpuesto = grupo.id;
-                           break;
-                        }
-                     }
-                     if(oldpuesto) break;
+                     olddpto = this.config.obtenerDpto(grupo.id);
+                     if(olddpto) break;
                   }
-                  if(!oldpuesto) fallback("El profesor no pertenece a ningún departamento");
+                  if(!olddpto) fallback("El profesor no pertenece a ningún departamento");
+                  else olddpto = olddpto.id;
 
-                  puesto = this.obtenerDpto(puesto);
-                  cambioDpto = oldpuesto !== puesto;
+                  dpto = this.obtenerDpto(puesto);
+                  cambioDpto = olddpto !== dpto;
                }
             }
 
@@ -200,14 +198,14 @@ class Profesor extends BaseComun(google.clase.Users) {
 
             if(cambioDpto) {
                try {
-                  extra.dpto.borrar = await google.miembro.borrar(oldpuesto, response.result.id);
+                  extra.dpto.borrar = await google.miembro.borrar(olddpto, response.result.id);
                }
                catch(error) {
                   console.error(error);
                   extra.dpto.borrar = error;
                }
                try {
-                  extra.dpto.agregar = await google.miembro.agregar(puesto, response.result.id);
+                  extra.dpto.agregar = await google.miembro.agregar(dpto, response.result.id);
                }
                catch(error) {
                   console.error(error);
@@ -237,6 +235,56 @@ class Profesor extends BaseComun(google.clase.Users) {
    }
 
    /**
+    * Crea un profesor sustituto.
+    *
+    * @param {Object} substituto: Describe al profesor sustituto. Cualquier información
+    *    de usuario que se incluya (p.e. puesto), será sobrescrita por la del sustituto,
+    * @param {String} titular: Identificador o dirección de correo del profesor
+    *    sustituido.
+    */
+   sustituir(sustituto, titular) {
+      sustituto = this.modificarProfesor(sustituto);
+
+      return {
+         id: this.constructor.parseID(sustituto[this.idField] || sustituto[this.emailField]),
+         operacion: sustituto.id?"actualizar":"crear",
+         then: async (callback, fallback) => {
+            fallback = fallback || fallback_default;
+
+            try { var sustituido = (await this.obtener(titular)).result; }
+            catch(error) { return fallback(`El sustituido '${titular}' no existe.`); }
+            
+            const cese = this.obtenerCampo("cese", sustituido);
+            if(cese) {
+               const hoy = new Date().toISOString().slice(0, 10);
+               if(cese <= hoy) return fallback(`El sustituido '${sustituido[this.emailField]}' ha cesado`);
+            }
+
+            // Copiamps la información del sustituido en el sustituto
+            sustituto.customSchemas = merge(sustituto.customSchemas, sustituido.customSchemas);
+
+            // Creaomos o actualizamos el sustituto
+            try {
+               var response = await this.operar(sustituto);
+            }
+            catch(error) { return fallback(error); }
+
+            const extra = response.additional = {}
+
+            // Añadimos el sustituto al profesor sustituido.
+            sustituido = {id: sustituido.id, customSchemas: {[this.schema]: {sustituto: response.result.id}}}
+            try { extra.sustituido = await this.actualizar(sustituido)}
+            catch(error) { 
+               console.error(error);
+               extra.sustituido = error;
+            }
+
+            return callback(response);
+         }
+      }
+   }
+
+   /**
     * Marca un profesor como cesado y lo saca de todos los grupos en los que está
     *
     * @param {String} profesor: Identificador o dirección de correo del usuario.
@@ -260,14 +308,71 @@ class Profesor extends BaseComun(google.clase.Users) {
 
       return Object.assign({}, request, {
          then: async (callback, fallback) => {
-            const batch = new Batch();
-            batch.add(request);
+            try { 
+               var response = await request;
+               profesor = response.result;
+            }
+            catch(error) { return fallback(error); }
 
+            try { var sustituido = await this.listar({query: `${this.schema}.sustituto=${profesor[this.idField]}`}); }
+            catch(error) { console.error(error); }
+
+            const batch = new Batch();
+
+            if(sustituido.length === 0){
+               // No sustituía a nadie: nada que hacer.
+            }
+            else {
+               if(sustituido.length > 1) {
+                  console.warn(`${profesor[this.emailField]} sustituye a más de un profesor`);
+               }
+               for(let sust of sustituido) {
+                  sust = {id: sust.id, customSchemas: {[this.schema]: {sustituto: null}}}
+                  batch.add(this.actualizar(sust));
+               }
+            }
+
+            // Elimina al profesor de todos los grupos
             for await (const grupo of this.grupos(request.id)) {
                batch.add(google.miembro.borrar(grupo.email, request.id));
             }
 
-            return callback(await batch);
+            response.additional = await batch;
+            return callback(response);
+         }
+      });
+   }
+
+   borrar(profesor) {
+      let id = this.constructor.parseID(profesor),
+            request = super.borrar(profesor);
+
+      return Object.assign({}, request, {
+         then: async (callback, fallback) => {
+            fallback = fallback || fallback_default;
+
+            if(id.includes('@')) {
+               try { id = (await this.obtener(profesor)).result.id; }
+               catch(error) { console.error(error); }
+            }
+
+            try { var sustituido = await this.listar({query: `${this.schema}.sustituto=${id}`}); }
+            catch(error) { console.error(error); }
+
+            if(sustituido.length > 1) {
+               console.warn(`${profesor[this.emailField]} sustituye a más de un profesor`);
+            }
+
+            for(let sust of sustituido) {
+               sust = {id: sust.id, customSchemas: {[this.schema]: {sustituto: null}}}
+               try {
+                  await this.actualizar(sust);
+               }
+               catch(error) { console.error(error); }
+            }
+
+            try { return callback(await request); }
+            catch(error) { return fallback(error); }
          }
       });
    }

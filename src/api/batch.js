@@ -17,10 +17,21 @@ function procesarItem(item, params) {
    if(!item.then) throw new Error("La operación debe ser un objeto thenable");
 
    id = params.id || item.id ||  Math.floor(Math.random()*10**15);
-   formatter = params.formatter || item.formatter || (value => formatear(item.operacion, value));
+   formatter = ((o) => (value) => (params.formatter || item.formatter || formatear)(o, value))(item.operacion);
 
-   delay(() => item.then(() => true));  // Forzamos a que se empiece a hacer la petición.
-   return [id, item, formatter];
+   // Para evitar que la petición se ejecute
+   // más de una vez, la transformamos en una promesa.
+   let promise = item;
+   if(!(item instanceof Promise)) {
+      promise = new Promise(async (resolve, reject) => {
+         try { resolve(await item); }
+         catch(error) { reject(error) }
+      });
+   }
+   promise.request = item;
+
+   delay(async () => promise.then(r => true, e => true)); // Forzamos a que se empiece a hacer la petición.
+   return [id, promise, formatter];
 }
 
 
@@ -89,13 +100,13 @@ Batch.prototype.add = function(item, params) {
 Batch.prototype[Symbol.asyncIterator] = async function*() {
    let index = 0;
    while(index < this._buffer.length) {
-      const [id, request, formatter] = this._buffer[index++];
+      const [id, promise, formatter] = this._buffer[index++];
 
-      try { var ok = formatter(await request); }
+      try { var ok = formatter(await promise); }
       catch(error) { ok = formatter(error); }
       
       ok.index = index;
-      ok.request = request;
+      ok.request = promise.request;
       yield [id, ok];
    }
    this._done = true;

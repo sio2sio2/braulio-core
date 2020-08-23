@@ -22,7 +22,7 @@ export default Base => class extends Base {
    }
 
    // Buscan campos en los esquemas.
-   obtenerValor(clave, entidad) {
+   obtenerCampo(clave, entidad) {
       if(!entidad.customSchemas) return null;
 
       try {
@@ -36,5 +36,22 @@ export default Base => class extends Base {
    obtener(entidad) {
       const args = this instanceof clase.Users?{projection: "custom", customFieldMask: this.schema}:{};
       return super.obtener(entidad, args);
+   }
+
+   // args.cesado = true, sólo lista los profesores/alumnos cesados.
+   listar(args) {
+      args = Object.assign(this instanceof clase.Users?{projection: "custom", customFieldMask: this.schema}:{}, args);
+      const path = this.organizador.orgUnitPath || `/${this.organizador.name}`,
+            query = [args.query || ""];
+
+      query.push(`orgUnitPath=${path}`);
+      if(args.cesado) {
+         const hoy = new Date().toISOString().slice(0, 10);
+         query.push(`${this.schema}.cese<=${hoy}`);
+      }
+      delete args.cesado;
+      args.query = query.join(" ");
+
+      return super.listar(args);
    }
 }

@@ -18,8 +18,8 @@ export async function inicializar() {
          // {email1: grupo, email2: grupo, etc.}: Relación de grupos existentes.
          existentes = Object.fromEntries((await google.grupo.listar()).map(gr => [gr.email, gr])),
          // {path1: ou, path2: ou, etc.}. Relación de todas las ou existentes.
-         ous = Object.fromEntries((await google.ou.listar()).result.organizationUnits.map(ou => [ou.name, ou])),
-         esquemas = Object.fromEntries((await google.esquema.listar()).result.schemas.map(sc => [sc.schemaName, sc]));
+         ous = Object.fromEntries(((await google.ou.listar()).result.organizationUnits || []).map(ou => [ou.name, ou])),
+         esquemas = Object.fromEntries(((await google.esquema.listar()).result.schemas || []).map(sc => [sc.schemaName, sc]));
 
    // Intenta averiguar los IDs existentes y crea los grupos y ou inexistentes.
    async function vuelta(seed) {
@@ -83,8 +83,6 @@ export async function inicializar() {
          ou: {},
          esquemas: {}
       };
-
-      await batch;
 
       // Apunta los identificadores de grupos y ous recientemente creados.
       for await(const [key, result] of batch) {

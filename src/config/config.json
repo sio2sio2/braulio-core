@@ -33,7 +33,7 @@
             },
             {
                "fieldName": "tutoria",
-               "fieldType": "EMAIL"
+               "fieldType": "STRING"
             },
             {
                "fieldName": "cese",
@@ -41,11 +41,11 @@
             },
             {
                "fieldName": "sustituto",
-               "fieldType": "EMAIL"
+               "fieldType": "STRING"
             },
             {
                "fieldName": "taquilla",
-               "fieldType": "INT64",
+               "fieldType": "STRING",
                "multiValued": true
             }
          ]

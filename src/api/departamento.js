@@ -89,6 +89,10 @@ class Departamento extends BaseComun(google.clase.Groups) {
          }
       });
    }
+
+   miembros(id) {
+      return google.miembro.listar(id);
+   }
 }
 
 export default Departamento;

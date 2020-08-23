@@ -329,7 +329,7 @@ La inicialización podemos dividirla en tres tareas:
   | ``savedconfig`` | se ha guardado la configuración,       |
   | ``onreset``     | nos desvinculamos de la configuración. |
 
-  ![Eventos del mayordomo](images/eventos.png)
+  ![Eventos del mayordomo](docs/images/eventos.png)
 
 - La inicialización propiamente dicha a través del método ``.init()``:
 
@@ -467,6 +467,14 @@ administrador y que tiene esta estructura:
       "alumnos": { "orgUnitId": "### identificador de la ou ###" },
       "misc": { "orgUnitId": "### identificador de la ou ###" }
    },
+   "esquemas": {
+      "claustro": {
+         "schemaId": "### Identificador del esquema ###"
+      },
+      "alumnos": {
+         "schemaId": "### Identificador del esquema ###"
+      }
+   },
    "departamentos": [
       { 
          "id": "### Identificador del grupo de Filosofía ###",
@@ -486,9 +494,9 @@ alguno de los nombres de grupo inutilice la aplicación. Al completarse con
 éxito la autenticación, se intenta cargar el fichero de configuración:
 
 - Si lo encuentra, hará consultas para obtener los nombres, direcciones y
-  descripciones, de los grupos y la ruta de las unidades organizativas a partir
-  de los identificadores almacenados. Una vez completada esta tarea se
-  disparará el evento *onready*.
+  descripciones, de los grupos y la ruta de las unidades organizativas y los
+  campos de los esquema de usuario a partir de los identificadores almacenados.
+  Una vez completada esta tarea se disparará el evento *onready*.
 - Si no lo encuentra, disparará el evento *noconfig*, generará un fichero
   de configuración predeterminado y disparará el evento *preconfig*, útil por
   si se quiere habilitar que el usuario pueda modificar ese fichero predefinido.
@@ -588,7 +596,10 @@ Es importante tener presente cinco cosas:
 ### API de manipulación
 
 Los métodos de manipulación de las cuentas de G-Suite se encuentra dentro del
-objeto ``mayordomo.api``
+objeto ``mayordomo.api``. Hay definidos unos métodos de manipulación de alto
+nivel que, en principio, son los únicos necesarios para construir una aplicación
+co la linrería. Sin embargo, se da también acceso a métoso de manipulación de
+bajo nivel.
 
 #### Manipulación a alto nivel
 
@@ -598,23 +609,97 @@ clase) directamente a través de los objetos:
 | Objetos          | Descripción                                 |
 | ---------------- | ------------------------------------------- |
 | ``api.profesor`` | Métodos de manipulación de profesores.      |
-| ``api.alumno``   | Métodos de manipulación de alumnos.         |
 | ``api.dpto``     | Métodos de manipulación de departamentos.   |
+| ``api.alumno``   | Métodos de manipulación de alumnos.         |
 | ``api.clase``    | Métodos de manipulación de grupos de clase. |
+
+Estas cuatro entidades disponen todas ellas de métodos para crearlas
+(``crear``), modificarlar (``actualizar``), borrarlas (``borrar``), obtener la
+información de una de ellas (``obtener``) o listar todas las disponibles
+(``listar``). Además, el método ``operar`` realiza la operación de crear,
+actualizar o bprar dependiendo de cómo pasemos su argumento. Lo trataremos en
+profundidad al analizar las cuatro a continuación, aunque los aspectos generales
+de estos módulos comunes se analizarán con la primera de ellas.
+
+<a name="profesores"></a>
+
+##### Profesores
+
+Un profesor tiene particularidades que obligan a sus métodos a realizar trabajo
+extra:
+
+- Desempeñan un puesto, lo cual les hace pertenecer indefectiblemente a un
+  departamento.
+- Pueden ser tutores de algún curso.
+- Pueden estar de baja y ser sustituidos por otro profesor.
+- Pueden disponer de una o varias taquillas.
+- PUedeb haber cesado en su puesto, pero seguir operativa la cuenta.
+
+Por ello, se ha definido un esquema de usuario con los siguientes campos:
+
+1. **puesto** cuyo valor es el código del puesto de desempeño.
+2. **tutoria** con la denominación del grupo de clase del que es tutor
+   (p.e. 2ESO-A).
+3. **cese** cuyo valor la fecha de cese.
+4. **sustituto** cuyo valor será el identificador de la cuenta de profesor
+   que lo sustituya.
+5. **taquilla** que es un array que contiene los códigos de las taquillas
+   asignadas.
+
+Aunque los campos forman parte del esquema *profesor* y pueden manipilarse como
+tales, puede modificarse de modo más sencillo.
 
 Para manipular **profesores** los métodos disponibles son los siguientes:
 
-| Métodos                           | Descripción                                       |
-|---------------------------------- | ------------------------------------------------- |
-| ``profesor.listar(args)``         | Lista todos los profesores.                       |
-| ``profesor.crear(info)``          | Crea un nuevo profesor.                           |
-| ``profesor.actualizar(info)``     | Actualiza un profesor.                            |
-| ``profesor.borrar(id)``           | Borra un profesor.                                |
-| ``profesor.operar(info)``         | Crea, actualiza o borrar según el caso.           |
-| ``profesor.cesar(id, fecha)``     | Cesa un profesor.                                 |
-| ``profesor.obtenerDpto(puesto)``  | Devuelve el grupo de dpto asociado al puesto.     |
-| ``profesor.grupos(id)``           | Lista los grupos a los que pertenece un profesor. |
+| Métodos                                      | Descripción                                       |
+|--------------------------------------------- | ------------------------------------------------- |
+| ``profesor.listar(args)``                    | Lista todos los profesores.                       |
+| ``profesor.obtener(id)``                     | Obtiene la información de un profesor             |
+| ``profesor.crear(info)``                     | Crea un nuevo profesor.                           |
+| ``profesor.actualizar(info)``                | Actualiza un profesor.                            |
+| ``profesor.borrar(id)``                      | Borra un profesor.                                |
+| ``profesor.operar(info)``                    | Crea, actualiza o borrar según el caso.           |
+| ``profesor.cesar(id, fecha)``                | Cesa un profesor.                                 |
+| ``profesor.sustituir(sustituto, sustituido)``| Crea un sustituto.                                |
+| ``profesor.obtenerDpto(puesto)``             | Devuelve el grupo de dpto asociado al puesto.     |
+| ``profesor.obtenerCampo(nombre, profesor)``  | Devuelve el grupo de dpto asociado al puesto.     |
+| ``profesor.grupos(id)``                      | Lista los grupos a los que pertenece un profesor. |
 
+``profesor.listar(args)`` devuelve un objeto *thenable* con la lista de
+profesores. El argumento permite afinar la búsqueda añadiendo (parámetros a la
+búsqueda)[https://developers.google.com/admin-sdk/directory/v1/reference/users/list#parameters].
+Algunos, sin embargo, se aplican por defecto, como la proyección para ver los
+campos propios del profesor. o limitar la búsqueda a la unidad organizativa a la
+que pertenecen los profesores. A los parámetros estándar se añade ``cesado`` que
+es un atajo para mostrar los profesores que han cesado:
+
+~~~javascript
+
+const request = mayordomo.api.profesor.listar({cesado: true});
+request.then(cesados => {
+   console.log("DEBUG", cesados);  // Array de profesores cesados.
+});
+
+~~~
+
+Además, la petición se comporta también como un iterable asíncrono, por lo que
+dentro de una función asíncrona puede obtenerse la lista del siguiente modo:
+
+~~~javascript
+
+for await(const cesado of request) {
+   console.log("DEBUG", cesado);
+}
+
+~~~
+
+SEGUIR...
+
+##### Departamentos
+
+##### Alumnos
+
+##### Grupos de clase
 
 #### Manipulación a bajo nivel
 
