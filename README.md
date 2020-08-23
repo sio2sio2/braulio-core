@@ -628,10 +628,21 @@ Es importante tener presente cinco cosas:
 ### Manipulación
 
 Los métodos de manipulación de las cuentas de G-Suite se encuentra dentro del
-objeto ``mayordomo.api``. Hay definidos unos métodos de [manipulación de alto
-nivel](#alto-nivel) que, en principio, son los únicos necesarios para construir
-una aplicación co la linrería. Sin embargo, se da también acceso a métodos de
-manipulación de bajo nivel.
+objeto ``mayordomo.api``. En principio, hay cuatro entidades de alto nivel:
+
+* Profesores.
+* Departamentos.
+* Alumnos.
+* Grupos de clase.
+
+con meodos y atributos, algunos de los cuales comparten. Esto se debe a que
+internamente heredan de clases de más bajo nivel según el esquema:
+
+![Esquema de clases](docs/images/clases.png)
+
+Describiremos desde la base hasta las cuatro entidades terminales para exponer
+primero los métodos comunes e ir gradualmente introduciendo las particularidades
+de cada entidad.
 
 #### <a name="bajo-nivel"></a>Manipulación a bajo nivel
 
