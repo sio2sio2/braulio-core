@@ -40,15 +40,20 @@ export default Base => class extends Base {
 
    // args.cesado = true, sólo lista los profesores/alumnos cesados.
    listar(args) {
+      const hoy = new Date().toISOString().slice(0, 10);
+
       args = Object.assign(this instanceof clase.Users?{projection: "custom", customFieldMask: this.schema}:{}, args);
       const path = this.organizador.orgUnitPath || `/${this.organizador.name}`,
             query = [args.query || ""];
 
       query.push(`orgUnitPath=${path}`);
-      if(args.cesado) {
-         const hoy = new Date().toISOString().slice(0, 10);
+      if(args.activo) {
+         query.push(`${this.schema}.cese>${hoy} ${this.schema}.sustituto=0`);
+      }
+      else if(args.cesado) {
          query.push(`${this.schema}.cese<=${hoy}`);
       }
+      delete args.activo;
       delete args.cesado;
       args.query = query.join(" ");
 

@@ -70,7 +70,7 @@ class Profesor extends BaseComun(google.clase.Users) {
          customSchemas: {
             // Para buscar por "cese" es necesario que todos tengan una fecha.
             // Así que, en principio, se fija para todos una fecha inalcanzable.
-            [this.schema]: { cese: "2100-08-31" }
+            [this.schema]: { cese: "2100-08-31", sustituto: "0" }
          }
       }, profesor);
       profesor = this.modificarProfesor(profesor);
@@ -314,7 +314,7 @@ class Profesor extends BaseComun(google.clase.Users) {
                   console.warn(`${profesor[this.emailField]} sustituye a más de un profesor`);
                }
                for(let sust of sustituido) {
-                  sust = {id: sust.id, customSchemas: {[this.schema]: {sustituto: null}}}
+                  sust = {id: sust.id, customSchemas: {[this.schema]: {sustituto: "0"}}}
                   batch.add(this.actualizar(sust));
                }
             }
@@ -351,7 +351,7 @@ class Profesor extends BaseComun(google.clase.Users) {
             }
 
             for(let sust of sustituido) {
-               sust = {id: sust.id, customSchemas: {[this.schema]: {sustituto: null}}}
+               sust = {id: sust.id, customSchemas: {[this.schema]: {sustituto: "0"}}}
                try {
                   await this.actualizar(sust);
                }

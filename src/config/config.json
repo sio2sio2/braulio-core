@@ -44,6 +44,10 @@
                "fieldType": "STRING"
             },
             {
+               "fieldName": "jefe",
+               "fieldType": "STRING"
+            },
+            {
                "fieldName": "taquilla",
                "fieldType": "STRING",
                "multiValued": true
@@ -125,6 +129,18 @@
       {
          "name": "Economía",
          "puestos": [ "/[0-1][0-9]590061/", "/[0-1][0-9]590105/" ]
+      }
+   ],
+   "oferta": [
+      {
+         "descripcion": "Enseñanza Secundaria Obligatoria",
+         "nombre": "ESO",
+         "abreviatura": "ESO"
+      },
+      {
+         "descripcion": "Bachillerato",
+         "nombre": "Bacbillerato",
+         "abreviatura": "Bac"
       }
    ]
 }
