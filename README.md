@@ -628,12 +628,14 @@ Es importante tener presente cinco cosas:
 ### Manipulación
 
 Los métodos de manipulación de las cuentas de G-Suite se encuentra dentro del
-objeto ``mayordomo.api``. Hay definidos unos métodos de manipulación de alto
-nivel que, en principio, son los únicos necesarios para construir una aplicación
-co la linrería. Sin embargo, se da también acceso a métoso de manipulación de
-bajo nivel.
+objeto ``mayordomo.api``. Hay definidos unos métodos de [manipulación de alto
+nivel](#alto-nivel) que, en principio, son los únicos necesarios para construir
+una aplicación co la linrería. Sin embargo, se da también acceso a métodos de
+manipulación de bajo nivel.
 
-#### Manipulación a alto nivel
+#### <a name="bajo-nivel"></a>Manipulación a bajo nivel
+
+#### <a name="alto-nivel"></a>Manipulación a alto nivel
 
 Podemos manipular *profesores*, *departamentos*, *alumnos* y *grupos* (de
 clase) directamente a través de los objetos:
@@ -671,7 +673,7 @@ extra:
 - Pueden ser jefes de departamento.
 - Pueden estar de baja y ser sustituidos por otro profesor.
 - Pueden disponer de una o varias taquillas.
-- PUedeb haber cesado en su puesto, pero seguir operativa la cuenta.
+- Pueden haber cesado en su puesto, pero seguir operativa la cuenta.
 
 <a name="campos-profesor"></a>
 
@@ -703,7 +705,6 @@ Para manipular **profesores** los métodos disponibles son los siguientes:
 | ``profesor.operar(info)``                    | Crea, actualiza o borrar según el caso.           |
 | ``profesor.cesar(id, fecha)``                | Cesa un profesor.                                 |
 | ``profesor.sustituir(sustituto, sustituido)``| Crea un sustituto.                                |
-| ``profesor.obtenerDpto(puesto)``             | Devuelve el grupo de dpto asociado al puesto.     |
 | ``profesor.obtenerCampo(nombre, profesor)``  | Devuelve el grupo de dpto asociado al puesto.     |
 | ``profesor.grupos(id)``                      | Lista los grupos a los que pertenece un profesor. |
 
@@ -759,8 +760,6 @@ SEGUIR...
 ##### Alumnos
 
 ##### Grupos de clase
-
-#### Manipulación a bajo nivel
 
 #### Procesamiento por lotes
 
