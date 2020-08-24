@@ -628,7 +628,8 @@ Es importante tener presente cinco cosas:
 ### Manipulación
 
 Los métodos de manipulación de las cuentas de G-Suite se encuentra dentro del
-objeto ``mayordomo.api``. En principio, hay cuatro entidades de alto nivel:
+objeto ``mayordomo.api``. En principio, hay cuatro entidades de alto nivel que
+serán las que tengamos principalmente que utilizar en una ulterior aplicación:
 
 * Profesores.
 * Departamentos.
@@ -645,6 +646,18 @@ primero los métodos comunes e ir gradualmente introduciendo las particularidade
 de cada entidad.
 
 #### <a name="bajo-nivel"></a>Manipulación a bajo nivel
+
+``EntidadBase`` define los siguientes métodos:
+
+| Métodos                  | Descripción                              |
+| ------------------------ | ---------------------------------------- |
+| ``crear(entidad)``       | Crea la entidad.                         |
+| ``actualizar(entidad)``  | Actualiza la entidad.                    |
+| ``borrar(id)``           | Borra la entidad con el ID suministrado. |
+| ``operar(entidad)``      | Crea, actualiza o borra la entidad.      |
+| ``obtener(id, params)``  | Obtiene la entidad del ID suministrado.  |
+
+SEGUIR...
 
 #### <a name="alto-nivel"></a>Manipulación a alto nivel
 

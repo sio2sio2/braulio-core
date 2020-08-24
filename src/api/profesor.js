@@ -259,7 +259,7 @@ class Profesor extends BaseComun(google.clase.Users) {
       sustituto = this.modificarProfesor(sustituto);
 
       return {
-         id: this.constructor.parseID(sustituto[this.idField] || sustituto[this.emailField]),
+         id: sustituto[this.idField] || this.constructor.parseID(sustituto[this.emailField]),
          operacion: sustituto.id?"actualizar":"crear",
          then: async (callback, fallback) => {
             fallback = fallback || fallback_default;
@@ -283,7 +283,7 @@ class Profesor extends BaseComun(google.clase.Users) {
             // Así que primero lo creamos/actualizamos sin ese cargo.
             const jefe = this.obtenerCampo("jefe", sustituto);
             //if(jefe) delete sustituto.customSchemas[this.schema].jefe;
-            //if(jefe) sustituto.noDetectarJefes = true;
+            if(jefe) sustituto.noDetectarJefes = true;
 
             // Creaomos o actualizamos el sustituto
             try { var response = await this.operar(sustituto); }
@@ -298,22 +298,6 @@ class Profesor extends BaseComun(google.clase.Users) {
                console.error(error);
                extra.sustituido = error;
             }
-
-            /*
-            if(jefe) {
-               sustituto.customSchemas[this.schema].jefe = true;
-               sustituto = {
-                  id: response.result.id,
-                  //customSchemas: sustituto.customSchemas
-                  customSchemas: { [this.schema]: { jefe: true }}
-               }
-               try { extra.jefe = await this.actualizar(sustituto) }
-               catch(error) {
-                  console.error(error);
-                  extra.jefe = error;
-               }
-            }
-            */
 
             return callback(response);
          }

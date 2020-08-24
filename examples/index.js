@@ -293,7 +293,7 @@ function interfaz(client) {
             console.log("DEBUG", response);
             appendPre(`${sustituto.primaryEmail}: OK`);
          }, error => {
-            console.log("DEBUG", error);
+            console.error("DEBUG: ERROR", error);
             appendPre(`${sustituto.primaryEmail}: Falló`);
          })
 

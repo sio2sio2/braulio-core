@@ -1,5 +1,7 @@
 // Funciones relacionadas con la membresía.
 import {GrUsers} from "./base.js";
+import Groups from "./grupos.js";
+import Users from "./usuarios.js";
 
 /**
  * Lista todos los miemnbros de un grupo.
@@ -16,7 +18,7 @@ import {GrUsers} from "./base.js";
  * Véanse los ejemplos de obtUsuarios.
  */
 export function listar(groupKey, args) {
-   groupKey = GrUsers.parseID(groupKey);
+   groupKey = Groups.parseID(groupKey);
    args = args || {};
    const limit = args.limit;
    delete args.limit;
@@ -43,8 +45,8 @@ export function listar(groupKey, args) {
  * @param {String} miembro: Identificador o dirección del miembro.
  */
 export function borrar(grupo, miembro) {
-   grupo = GrUsers.parseID(grupo);
-   miembro = GrUsers.parseID(miembro);
+   grupo = Groups.parseID(grupo);
+   miembro = Users.parseID(miembro);
 
    const request = gapi.client.request({
       path: `https://www.googleapis.com/admin/directory/v1/groups/${grupo}/members/${miembro}`,
@@ -66,8 +68,8 @@ export function borrar(grupo, miembro) {
 export function agregar(grupo, miembro) {
    const body = { role: "MEMBER" };
 
-   grupo = GrUsers.parseID(grupo);
-   miembro = GrUsers.parseID(miembro);
+   grupo = Groups.parseID(grupo);
+   miembro = Users.parseID(miembro);
 
    if(miembro.includes('@')) body.email = miembro
    else body.id = miembro;
